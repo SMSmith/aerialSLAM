@@ -3,6 +3,11 @@ Factor Graphs for Quadcopters.  Based on a group project in Statistical Techniqu
 
 ## Credit primarily goes to:
 Philip Cooksey
+
 Eugene Fang
+
 Ben Holden
+
 Drew Marschner
+
+Stephen Smith
