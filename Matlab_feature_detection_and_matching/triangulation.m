@@ -1,6 +1,9 @@
 function [motion] = triangulation(matchFeat)
 % Get the difference in location and angle between the two frames
-motion = matchFeat;
+distances_0 = matchFeat.frame0.distances;
+distances_1 = matchFeat.frame1.distances;
+matchMetric = matchFeat.matchMetric;
+
 % Save triangulation motion
 motion.dx = 0;
 motion.dy = 0;
