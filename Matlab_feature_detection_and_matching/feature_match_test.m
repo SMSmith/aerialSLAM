@@ -16,8 +16,8 @@ for i = 0:633
         num1 = sprintf('%i',i);
         num2 = sprintf('%i',i+1);
     end
-    f1 = sprintf('left%s.jpg',num1);
-    f2 = sprintf('left%s.jpg',num2);
+    f1 = sprintf('../datasets/cmu_16662_p2/sensor_data/left%s.jpg',num1);
+    f2 = sprintf('../datasets/cmu_16662_p2/sensor_data/left%s.jpg',num2);
     I1 = rgb2gray(imread(f1));
     I2 = rgb2gray(imread(f2));
     points1 = detectSURFFeatures(I1);
