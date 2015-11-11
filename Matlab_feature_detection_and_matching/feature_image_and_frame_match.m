@@ -16,11 +16,10 @@ for i = 0:633
         num1 = sprintf('%i',i);
         num2 = sprintf('%i',i+1);
     end
-    pre = '/home/ben/Documents/MATLAB/sensor_data/';
-    fl1 = sprintf('%sleft%s.jpg',pre,num1);
-    fl2 = sprintf('%sleft%s.jpg',pre,num2);
-    fr1 = sprintf('%sright%s.jpg',pre,num1);
-    fr2 = sprintf('%sright%s.jpg',pre,num2);
+    fl1 = sprintf('../datasets/cmu_16662_p2/sensor_data/left%s.jpg',num1);
+    fl2 = sprintf('../datasets/cmu_16662_p2/sensor_data/left%s.jpg',num2);
+    fr1 = sprintf('../datasets/cmu_16662_p2/sensor_data/right%s.jpg',num1);
+    fr2 = sprintf('../datasets/cmu_16662_p2/sensor_data/right%s.jpg',num2);
     Il1 = rgb2gray(imread(fl1));
     Il2 = rgb2gray(imread(fl2));
     Ir1 = rgb2gray(imread(fr1));
