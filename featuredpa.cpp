@@ -9,7 +9,7 @@ FeatureDPA::FeatureDPA::FeatureDPA()
 
 Feature FeatureDPA::findMatches(const Mat& img_1, const Mat& img_2, bool print)
 {
-  const static bool DEBUG = true;
+  const static bool DEBUG = false;
   Feature feature;
   
    //-- Step 1: Detect the keypoints using FAST Detector
