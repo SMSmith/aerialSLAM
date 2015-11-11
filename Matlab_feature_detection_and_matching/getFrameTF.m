@@ -1,5 +1,5 @@
 % TODO: Write a description of this file
-function [matchFeat] = getFeaturesBetweenFrames(features_0, features_1)
+function [matchFeat] = getFrameTF(features_0, features_1)
 % Get features from each left image of the respective frames
 feat_0 = features_0.leftFeatures;
 feat_1 = features_1.leftFeatures;
