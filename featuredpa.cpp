@@ -68,7 +68,15 @@ void FeatureDPA::displayMatches(const Mat& img_1, const Mat& img_2,
 }
 
 /**
-  * projMat1:
+  *
+  *
+  * img_1: Image from camera 1
+  * img_2: Image from camera 2
+  * projMat1: Projection matrix for camera 1
+  * projMat2: Projection matrix for camera 2
+  * print: boolean value indicating whether to display image
+  *
+  * Returns Nx3 Euclidean coordinates
   */
 Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
                                const Matx34d& projMat1, const Matx34d& projMat2,
@@ -80,7 +88,6 @@ Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
   //-- Get the smaller number of matched features
   int numMatches = features.matches.size();
 
-  
   //-- Define vectors containing the points
   std::vector<Point2f> pts1;
   std::vector<Point2f> pts2;
@@ -93,13 +100,19 @@ Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
     pts2.push_back(pt2);
   }
 
-  //-- Define matrix that will be 4xN world points
-  Mat worldPoints(4, numMatches, CV_64FC4);
+  //-- Define matrix that will be 4xN homogeneous world points
+  Mat hWorldPoints;
 
   //-- Use the OpenCV triangulation function to get 3D points for each matched feature
   cv::triangulatePoints(projMat1, projMat2,
                         pts1, pts2,
-                        worldPoints);
+                        hWorldPoints);
 
-  return worldPoints;
+  // hWorldPoints is a 4xN homogeneous matrix, and it needs to be converted to
+  // Nx3 3D Euclidean space coordinates
+  Mat worldPoints;
+  convertPointsFromHomogeneous(hWorldPoints.t(), worldPoints);
+
+  // Return the Euclidean coordinates
+  return worldPoints.reshape(1, numMatches);
 }
