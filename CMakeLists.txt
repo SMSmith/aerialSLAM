@@ -1,5 +1,5 @@
 project(robostat)
-find_package(OpenCV REQUIRED )
+find_package(OpenCV 3.0.0 EXACT REQUIRED )
 set( NAME_SRC 
     featuredpa.cpp
     main.cpp    

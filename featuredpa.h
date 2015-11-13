@@ -4,6 +4,7 @@
 #include "opencv2/core/core.hpp"
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
+#include "opencv2/calib3d/calib3d.hpp"
 #include <vector>
 
 using namespace cv;
@@ -24,7 +25,11 @@ public:
   void displayMatches(const Mat& img_1, const Mat& img_2,
                       const std::vector<KeyPoint>& keypoints_1, const std::vector<KeyPoint>& keypoints_2,
                       const std::vector<DMatch>& matches);
-  
+  //-- Gives 3D points of all given features
+  Mat getWorldPoints(const Mat& img_1, const Mat& img_2,
+                      const Matx34d& projMat1, const Matx34d& projMat2,
+                      bool print=false);
+
 private:
   Ptr<FastFeatureDetector> featureDetector;
   Ptr<ORB> extractor;

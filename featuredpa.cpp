@@ -49,10 +49,10 @@ Feature FeatureDPA::findMatches(const Mat& img_1, const Mat& img_2, bool print)
 
   //-- Draw only "good" matches
   if(print) {
-   displayMatches(img_1,img_2,feature.keypoints_1,feature.keypoints_2,feature.matches); 
+   displayMatches(img_1,img_2,feature.keypoints_1,feature.keypoints_2,feature.matches);
    waitKey(0);
   }
-  
+
   return feature;
 }
 
@@ -67,3 +67,39 @@ void FeatureDPA::displayMatches(const Mat& img_1, const Mat& img_2,
   imshow("Matches", img_matches);
 }
 
+/**
+  * projMat1:
+  */
+Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
+                               const Matx34d& projMat1, const Matx34d& projMat2,
+                               bool print)
+{
+  //-- Get matching features from both images
+  Feature features = findMatches(img_1, img_2, print);
+
+  //-- Get the smaller number of matched features
+  int numMatches = features.matches.size();
+
+  
+  //-- Define vectors containing the points
+  std::vector<Point2f> pts1;
+  std::vector<Point2f> pts2;
+
+  //--Convert all matching keypoints into the points that go into each vector
+  for (int i = 0; i < numMatches; i++) {
+    Point2f pt1 = features.keypoints_1[features.matches[i].queryIdx].pt;
+    Point2f pt2 = features.keypoints_2[features.matches[i].trainIdx].pt;
+    pts1.push_back(pt1);
+    pts2.push_back(pt2);
+  }
+
+  //-- Define matrix that will be 4xN world points
+  Mat worldPoints(4, numMatches, CV_64FC4);
+
+  //-- Use the OpenCV triangulation function to get 3D points for each matched feature
+  cv::triangulatePoints(projMat1, projMat2,
+                        pts1, pts2,
+                        worldPoints);
+
+  return worldPoints;
+}
