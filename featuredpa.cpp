@@ -76,35 +76,24 @@ void FeatureDPA::displayMatches(const Mat& img_1, const Mat& img_2,
   * projMat2: Projection matrix for camera 2
   * print: boolean value indicating whether to display image
   *
-  * Returns Nx3 Euclidean coordinates
+  * Returns features with actual world points
   */
-Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
-                               const Matx34d& projMat1, const Matx34d& projMat2,
-                               bool print)
+Feature FeatureDPA::getWorldPoints(Feature features, const Matx34d& projMat1, const Matx34d& projMat2)
 {
   //-- Get matching features from both images
-  Feature features = findMatches(img_1, img_2, print);
-
-  //-- Get the smaller number of matched features
-  int numMatches = features.matches.size();
+  // Feature features = findMatches(img_1, img_2, print);
 
   //-- Define vectors containing the points
   std::vector<Point2f> pts1;
   std::vector<Point2f> pts2;
 
-  //--Convert all matching keypoints into the points that go into each vector
-  for (int i = 0; i < numMatches; i++) {
-    Point2f pt1 = features.keypoints_1[features.matches[i].queryIdx].pt;
-    Point2f pt2 = features.keypoints_2[features.matches[i].trainIdx].pt;
-    pts1.push_back(pt1);
-    pts2.push_back(pt2);
-  }
+  int numMatches = get2DPointfs(features,pts1,pts2);
 
   //-- Define matrix that will be 4xN homogeneous world points
   Mat hWorldPoints;
 
   //-- Use the OpenCV triangulation function to get 3D points for each matched feature
-  cv::triangulatePoints(projMat1, projMat2,
+  triangulatePoints(projMat1, projMat2,
                         pts1, pts2,
                         hWorldPoints);
 
@@ -114,5 +103,58 @@ Mat FeatureDPA::getWorldPoints(const Mat& img_1, const Mat& img_2,
   convertPointsFromHomogeneous(hWorldPoints.t(), worldPoints);
 
   // Return the Euclidean coordinates
-  return worldPoints.reshape(1, numMatches);
+  // return worldPoints.reshape(1, numMatches);
+
+  // Assign the world points to convient format -- Is there a better way?
+  features.worldPoint.resize(numMatches);
+  for(int i=0; i<numMatches; i++) {
+    features.worldPoint[i] = worldPoints.at<Point3f>(0,0);
+  }
+  return features;
+}
+
+Mat FeatureDPA::estimatePose(Feature f1, Feature f2, const Matx34d& projMat1, const Matx34d& projMat2) {
+  Mat rotation;
+  Mat translation;
+
+  //-- Define vectors containing the points
+  std::vector<Point2f> pts2d_1;
+  std::vector<Point2f> pts2d_2;
+
+  get2DPointfs(f1,pts2d_1,pts2d_2);
+
+  // // One vector for all of the 2d points
+  // std::vector 2DPoints;
+  // 2DPoints.reserve(pts2d_1.size()+pts2d_2.size());
+  // 2DPoints.insert(2DPoints.end(),pts2d_1.begin(),pts2d_1.end());
+  // 2DPoints.insert(2DPoints.end(),pts2d_2.begin(),pts2d_2.end());
+
+  // // One vector for all of the 3d points
+  // std::vector 3DPoints;
+  // 3DPoints.reserve(f1.worldPoint.size()+f2.worldPoint.size());
+  // 3DPoints.insert(3DPoints.end(),f1.worldPoint.begin(),f1.worldPoint.end());
+  // 3DPoints.insert(3DPoints.end(),f2.worldPoint.begin(),f2.worldPoint.end());
+
+  Mat distortion;
+  solvePnPRansac(f1.worldPoint,pts2d_1,projMat1,distortion,rotation,translation);
+
+  std::cout << rotation << std::endl;
+  std::cout << translation << std::endl;
+
+  return rotation;
+}
+
+int FeatureDPA::get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2) {
+  //-- Get the smaller number of matched features
+  int numMatches = features.matches.size();
+
+  //--Convert all matching keypoints into the points that go into each vector
+  for (int i = 0; i < numMatches; i++) {
+    Point2f pt1 = features.keypoints_1[features.matches[i].queryIdx].pt;
+    Point2f pt2 = features.keypoints_2[features.matches[i].trainIdx].pt;
+    pts1.push_back(pt1);
+    pts2.push_back(pt2);
+  }
+
+  return numMatches;
 }
