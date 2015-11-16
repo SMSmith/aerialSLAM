@@ -34,13 +34,54 @@ int main( int argc, char** argv )
   //-- Give it two images and (true/false) if you want to see the matches
   //-- @feature has keypoints for both images and the good matches between images
 
-  Feature f1 = featureFinder.findMatches(img_1L,img_1R,true);
-  Feature f2 = featureFinder.findMatches(img_2L,img_2R,true);
+  // Example process for two frames (4 images)
+  /******************************************************************/
+  // Feature f1 = featureFinder.findMatches(img_1L,img_1R,true);
+  // Feature f2 = featureFinder.findMatches(img_2L,img_2R,true);
 
-  Feature f1WithWorlds = featureFinder.getWorldPoints(f1,projMat1,projMat2);
-  Feature f2WithWorlds = featureFinder.getWorldPoints(f2,projMat1,projMat2);
+  // Feature f1WithWorlds = featureFinder.getWorldPoints(f1,projMat1,projMat2);
+  // Feature f2WithWorlds = featureFinder.getWorldPoints(f2,projMat1,projMat2);
 
-  Mat rotation = featureFinder.estimatePose(f1,f2,projMat1,projMat2);
+  // Mat tf = featureFinder.estimatePose(f1WithWorlds,f2WithWorlds);
+
+  // cout << tf << endl;
+  /******************************************************************/
+
+  // Process for all of the images
+  Mat imgL1 = imread("datasets/cmu_16662_p2/sensor_data/left000.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+  Mat imgR1 = imread("datasets/cmu_16662_p2/sensor_data/right000.jpg",CV_LOAD_IMAGE_GRAYSCALE);
+  int i=0;
+  while(true) {
+    // Read A new frame (two new images, left and right)
+    ostringstream tmp;
+    tmp << i;
+    string num = tmp.str();
+    if(num.size()==1) num = "00"+num;
+    if(num.size()==2) num = "0"+num;
+    // cout << num << endl;
+    Mat imgL2 = imread("datasets/cmu_16662_p2/sensor_data/left"+num+".jpg",CV_LOAD_IMAGE_GRAYSCALE);
+    Mat imgR2 = imread("datasets/cmu_16662_p2/sensor_data/right"+num+".jpg",CV_LOAD_IMAGE_GRAYSCALE);
+    if(imgL1.rows==0 || imgR2.rows==0) break;
+
+    // Get the features between the last two frames
+    Feature f1 = featureFinder.findMatches(imgL1,imgR1,false);
+    Feature f2 = featureFinder.findMatches(imgL2,imgR2,false);
+
+    // Assign world points to the features
+    Feature f1WithWorlds = featureFinder.getWorldPoints(f1,projMat1,projMat2);
+    Feature f2WithWorlds = featureFinder.getWorldPoints(f2,projMat1,projMat2);
+
+    // Get the delta transform
+    Mat tf = featureFinder.estimatePose(f1WithWorlds,f2WithWorlds);
+
+    cout << tf[0] << endl;
+
+    // Prepare the next iteration
+    imgL1 = imgL2;
+    imgR1 = imgR2;
+
+    i++;
+  }
 
   return 0;
 }

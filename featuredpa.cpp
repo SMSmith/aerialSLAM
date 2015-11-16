@@ -9,7 +9,7 @@ FeatureDPA::FeatureDPA::FeatureDPA()
 
 Feature FeatureDPA::findMatches(const Mat& img_1, const Mat& img_2, bool print)
 {
-  const static bool DEBUG = true;
+  const static bool DEBUG = false;
   Feature feature;
   
    //-- Step 1: Detect the keypoints using FAST Detector
@@ -108,42 +108,42 @@ Feature FeatureDPA::getWorldPoints(Feature features, const Matx34d& projMat1, co
   // Assign the world points to convient format -- Is there a better way?
   features.worldPoint.resize(numMatches);
   for(int i=0; i<numMatches; i++) {
-    features.worldPoint[i] = worldPoints.at<Point3f>(0,0);
+    features.worldPoint[i] = worldPoints.at<Point3f>(i,0);
   }
   return features;
 }
 
-Mat FeatureDPA::estimatePose(Feature f1, Feature f2, const Matx34d& projMat1, const Matx34d& projMat2) {
-  Mat rotation;
-  Mat translation;
+/**
+  * f1 - features from frame i between two images
+  * f2 - features from frame i+1 between two images
+  * (both must contain world points)
+  *
+  * Returns the transform from the world points
+  */
+Mat FeatureDPA::estimatePose(Feature f1, Feature f2) {
+  Mat tf, inliers;
 
-  //-- Define vectors containing the points
-  std::vector<Point2f> pts2d_1;
-  std::vector<Point2f> pts2d_2;
+  // for(int i=0; i<min(f1.worldPoint.size(),f2.worldPoint.size());i++) {
+  //   std::cout << f1.worldPoint[i] << " " << f2.worldPoint[i] << std::endl;
+  // }
+  std::vector<Point3f> matches1;
+  std::vector<Point3f> matches2;
 
-  get2DPointfs(f1,pts2d_1,pts2d_2);
+  int matchCount = matchWorldPoints(f1.worldPoint,f2.worldPoint,matches1,matches2);
 
-  // // One vector for all of the 2d points
-  // std::vector 2DPoints;
-  // 2DPoints.reserve(pts2d_1.size()+pts2d_2.size());
-  // 2DPoints.insert(2DPoints.end(),pts2d_1.begin(),pts2d_1.end());
-  // 2DPoints.insert(2DPoints.end(),pts2d_2.begin(),pts2d_2.end());
+  estimateAffine3D(matches1,matches2,tf,inliers);
 
-  // // One vector for all of the 3d points
-  // std::vector 3DPoints;
-  // 3DPoints.reserve(f1.worldPoint.size()+f2.worldPoint.size());
-  // 3DPoints.insert(3DPoints.end(),f1.worldPoint.begin(),f1.worldPoint.end());
-  // 3DPoints.insert(3DPoints.end(),f2.worldPoint.begin(),f2.worldPoint.end());
+  // std::cout << tf << std::endl;
 
-  Mat distortion;
-  solvePnPRansac(f1.worldPoint,pts2d_1,projMat1,distortion,rotation,translation);
-
-  std::cout << rotation << std::endl;
-  std::cout << translation << std::endl;
-
-  return rotation;
+  // Do we care about inliers?
+  return tf;
 }
 
+/**
+  * features are the paired feature points
+  * pts1 and pts2 are sorted vectors of the 
+  * aligned feature points
+  */
 int FeatureDPA::get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2) {
   //-- Get the smaller number of matched features
   int numMatches = features.matches.size();
@@ -157,4 +157,50 @@ int FeatureDPA::get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::
   }
 
   return numMatches;
+}
+
+int FeatureDPA::matchWorldPoints(std::vector<Point3f> w1,  std::vector<Point3f> w2, 
+                                 std::vector<Point3f> &m1, std::vector<Point3f> &m2) {
+  int matchCount = min(w1.size(),w2.size());
+  m1.resize(matchCount);
+  m2.resize(matchCount);
+
+  std::vector<Point3f> shortList;
+  std::vector<Point3f> longList;
+  if (matchCount == w1.size()) {
+    shortList = w1;
+    longList = w2;
+  }
+  else {
+    shortList = w2;
+    longList = w1;
+  }
+
+  // ICP???  LOL
+  for(int i=0; i<shortList.size(); i++) {
+    // For each element in the shorter list:
+    // - Find the closest element in the longer list
+    // - Assign the first element and the closest to the output
+    // - Pop the closest point from the long list
+    double minDist = INFINITY;
+    int minIndex;
+    for(int j=0; j<longList.size(); j++) {
+      double dist = norm(Mat(shortList[i]),Mat(longList[i]));
+      if(dist<minDist) {
+        minDist = dist;
+        minIndex = j;
+      }
+    }
+    if(matchCount == w1.size()) {
+      m1[i] = shortList[i];
+      m2[i] = longList[minIndex];
+    }
+    else {
+      m1[i] = longList[minIndex];
+      m2[i] = shortList[i];
+    }
+    longList.erase(longList.begin()+minIndex);
+  }
+
+  return matchCount;
 }

@@ -31,7 +31,7 @@ public:
   Feature getWorldPoints(Feature features, const Matx34d& projMat1, const Matx34d& projMat2);
 
   //-- 
-  Mat estimatePose(Feature f1, Feature f2, const Matx34d& projMat1, const Matx34d& projMat2);
+  Mat estimatePose(Feature f1, Feature f2);
 
 private:
   Ptr<FastFeatureDetector> featureDetector;
@@ -39,6 +39,7 @@ private:
   BFMatcher matcher;
 
   int get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2);
+  int matchWorldPoints(std::vector<Point3f> w1, std::vector<Point3f> w2, std::vector<Point3f> &m1, std::vector<Point3f> &m2);
 };
 
 #endif // FEATUREDPA_H
