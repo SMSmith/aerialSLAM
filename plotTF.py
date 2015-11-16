@@ -34,12 +34,8 @@ def main(args):
 			z.append(float(row['T[11]']))
 			t.append(float(row['time']))
 
-	# 30 years - 7 hours, 1 min, 7 seconds + 8 leap days
-	linuxEpic = 30*365*24*60*60.0-(7*60*60)-67+(8*24*60*60)
 	def getData(num,data,line):
-		# print t[num] # prints the time stamp
-		stamp =  time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(t[num]+linuxEpic))#, sqrt(data[0,num]**2+data[1,num]**2+data[2,num]**2)
-		plt.title(stamp)
+		plt.title(t[num])
 		line.set_data(data[0:2,:num])
 		line.set_3d_properties(data[2,:num])
 		return line
@@ -63,7 +59,7 @@ def main(args):
 	lineAnimation = animation.FuncAnimation(fig1, getData, steps, fargs=(data,l), interval=40)	
 
 	if makeMovie:
-		lineAnimation.save('stereoVision.mp4')
+		lineAnimation.save('stereoVision.mp4',writer='avconv')
 
 	plt.show()
 

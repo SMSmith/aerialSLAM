@@ -68,10 +68,7 @@ void FeatureDPA::displayMatches(const Mat& img_1, const Mat& img_2,
 }
 
 /**
-  *
-  *
-  * img_1: Image from camera 1
-  * img_2: Image from camera 2
+  * features: The set of matched features between two images
   * projMat1: Projection matrix for camera 1
   * projMat2: Projection matrix for camera 2
   * print: boolean value indicating whether to display image
@@ -80,13 +77,11 @@ void FeatureDPA::displayMatches(const Mat& img_1, const Mat& img_2,
   */
 Feature FeatureDPA::getWorldPoints(Feature features, const Matx34d& projMat1, const Matx34d& projMat2)
 {
-  //-- Get matching features from both images
-  // Feature features = findMatches(img_1, img_2, print);
-
   //-- Define vectors containing the points
   std::vector<Point2f> pts1;
   std::vector<Point2f> pts2;
 
+  // Get the matched points in order of matching
   int numMatches = get2DPointfs(features,pts1,pts2);
 
   //-- Define matrix that will be 4xN homogeneous world points
@@ -101,9 +96,6 @@ Feature FeatureDPA::getWorldPoints(Feature features, const Matx34d& projMat1, co
   // Nx3 3D Euclidean space coordinates
   Mat worldPoints;
   convertPointsFromHomogeneous(hWorldPoints.t(), worldPoints);
-
-  // Return the Euclidean coordinates
-  // return worldPoints.reshape(1, numMatches);
 
   // Assign the world points to convient format -- Is there a better way?
   features.worldPoint.resize(numMatches);
@@ -123,26 +115,24 @@ Feature FeatureDPA::getWorldPoints(Feature features, const Matx34d& projMat1, co
 Mat FeatureDPA::estimatePose(Feature f1, Feature f2) {
   Mat tf, inliers;
 
-  // for(int i=0; i<min(f1.worldPoint.size(),f2.worldPoint.size());i++) {
-  //   std::cout << f1.worldPoint[i] << " " << f2.worldPoint[i] << std::endl;
-  // }
   std::vector<Point3f> matches1;
   std::vector<Point3f> matches2;
 
+  // Kind of like ICP, except not really...
   int matchCount = matchWorldPoints(f1.worldPoint,f2.worldPoint,matches1,matches2);
 
+  // Gets the affine transform (just SVD) between two sets of world points
+  // Requires that they are in order in comparison with each other
   estimateAffine3D(matches1,matches2,tf,inliers);
-
-  // std::cout << tf << std::endl;
 
   // Do we care about inliers?
   return tf;
 }
 
 /**
-  * features are the paired feature points
-  * pts1 and pts2 are sorted vectors of the 
-  * aligned feature points
+  * features: the paired feature points
+  * pts1 and pts2:  sorted vectors of the aligned feature points
+  * returns the number of matched points
   */
 int FeatureDPA::get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2) {
   //-- Get the smaller number of matched features
@@ -159,6 +149,12 @@ int FeatureDPA::get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::
   return numMatches;
 }
 
+/**
+  *
+  * w1 and w2: the 3D Points from two separate frames
+  * m1 and m2: the list of paired 3D points that will be returned
+  * also returns the number of paired 3D points (minimum of lengths of w1 and w2)
+  */
 int FeatureDPA::matchWorldPoints(std::vector<Point3f> w1,  std::vector<Point3f> w2, 
                                  std::vector<Point3f> &m1, std::vector<Point3f> &m2) {
   int matchCount = min(w1.size(),w2.size());
