@@ -47,7 +47,6 @@ int main( int argc, char** argv )
   
     while(img_1.data && img_2.data) {
       printf("Frame %i\n", i);
-      begin_time = clock();
       //-- Attempt to read in the next set of files
       i++;
       if(i < 10) {
@@ -63,7 +62,7 @@ int main( int argc, char** argv )
       sprintf(file2, "../datasets/cmu_16662_p2/sensor_data/right%s.jpg", num);
       img_1 = imread( file1, CV_LOAD_IMAGE_GRAYSCALE );
       img_2 = imread( file2, CV_LOAD_IMAGE_GRAYSCALE );
-      
+      begin_time = clock();
       //-- Perform Analysis on the current files
       //-- Give it two images and (true/false) if you want to see the matches
       //-- @feature has keypoints for both images and the good matches between images
