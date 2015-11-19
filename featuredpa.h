@@ -5,19 +5,10 @@
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
-#include "gtsam-3.2.1/gtsam/geometry/Pose3.h"
-#include "gtsam-3.2.1/gtsam/geometry/Point3.h"
-#include "gtsam-3.2.1/gtsam/inference/Symbol.h"
-#include "gtsam-3.2.1/gtsam/slam/PriorFactor.h"
-#include "gtsam-3.2.1/gtsam/nonlinear/NonlinearFactorGraph.h"
-#include <gtsam/linear/NoiseModel.h>
-#include <gtsam/config.h>
-#include <gtsam/base/types.h>
 #include <vector>
 #include <iostream>
 
 using namespace cv;
-using namespace gtsam;
 
 struct Feature {
  std::vector<KeyPoint> keypoints_1; 
@@ -31,25 +22,24 @@ public:
   FeatureDPA();
   
   //-- Finds the matching features for two images
-  Feature findMatches(const Mat& img_1, const Mat& img_2, bool print=false);
+  Feature                   findMatches(const Mat& img_1, const Mat& img_2, bool print=false);
   //-- Display matches side-by-side in image. Access by print=true in @findMatches
-  void displayMatches(const Mat& img_1, const Mat& img_2,
-                      const std::vector<KeyPoint>& keypoints_1, const std::vector<KeyPoint>& keypoints_2,
-                      const std::vector<DMatch>& matches);
+  void                      displayMatches(const Mat& img_1, const Mat& img_2,
+                                          const std::vector<KeyPoint>& keypoints_1, const std::vector<KeyPoint>& keypoints_2,
+                                          const std::vector<DMatch>& matches);
   //-- Gives 3D points of two given features
-  Feature getWorldPoints(Feature features, const Matx34d& projMat1, const Matx34d& projMat2);
+  Feature                   getWorldPoints(Feature features, const Matx34d& projMat1, const Matx34d& projMat2);
 
-  //-- 
-  Mat estimatePose(Feature f1, Feature f2);
-  void initializeFactorGraph();
+  //-- estimate the pose of the robot based on word points
+  Mat                       estimatePose(Feature f1, Feature f2);
 
 private:
-  Ptr<FastFeatureDetector> featureDetector;
-  Ptr<ORB> extractor;
-  BFMatcher matcher;
+  Ptr<FastFeatureDetector>  featureDetector;
+  Ptr<ORB>                  extractor;
+  BFMatcher                 matcher;
 
-  int get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2);
-  int matchWorldPoints(std::vector<Point3f> w1, std::vector<Point3f> w2, std::vector<Point3f> &m1, std::vector<Point3f> &m2);
+  int                       get2DPointfs(Feature features, std::vector<Point2f> &pts1, std::vector<Point2f> &pts2);
+  int                       matchWorldPoints(std::vector<Point3f> w1, std::vector<Point3f> w2, std::vector<Point3f> &m1, std::vector<Point3f> &m2);
 };
 
 #endif // FEATUREDPA_H

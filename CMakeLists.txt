@@ -9,6 +9,7 @@ find_package(GTSAM)
 find_package(GTSAMCMakeTools)
 set( NAME_SRC 
     featuredpa.cpp
+    DynamicFactorGraph.cpp
     main.cpp    
 )
 

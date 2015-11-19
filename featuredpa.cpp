@@ -6,20 +6,6 @@ FeatureDPA::FeatureDPA::FeatureDPA()
   extractor = ORB::create();
 }
 
-void FeatureDPA::initializeFactorGraph() {
-  // The factor graph
-  NonlinearFactorGraph graph;
-
-  // A unique symbol is needed for each factor, here is the prior
-  static Symbol x1('x',1);
-
-  // Initialize the prior and add it to the graph
-  noiseModel::Diagonal::shared_ptr priorNoise = noiseModel::Diagonal::Sigmas((Vector(6) << 0.3, 0.3, 0.3, 0.1, 0.1, 0.1));
-  graph.add(PriorFactor<Pose3>(x1, Pose3(), priorNoise)); // Initialized to zero
-
-  // Add more factors
-}
-
 Feature FeatureDPA::findMatches(const Mat& img_1, const Mat& img_2, bool print)
 {
   const static bool DEBUG = false;
