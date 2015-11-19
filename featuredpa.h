@@ -5,10 +5,19 @@
 #include "opencv2/features2d/features2d.hpp"
 #include "opencv2/highgui/highgui.hpp"
 #include "opencv2/calib3d/calib3d.hpp"
+#include "gtsam-3.2.1/gtsam/geometry/Pose3.h"
+#include "gtsam-3.2.1/gtsam/geometry/Point3.h"
+#include "gtsam-3.2.1/gtsam/inference/Symbol.h"
+#include "gtsam-3.2.1/gtsam/slam/PriorFactor.h"
+#include "gtsam-3.2.1/gtsam/nonlinear/NonlinearFactorGraph.h"
+#include <gtsam/linear/NoiseModel.h>
+#include <gtsam/config.h>
+#include <gtsam/base/types.h>
 #include <vector>
 #include <iostream>
 
 using namespace cv;
+using namespace gtsam;
 
 struct Feature {
  std::vector<KeyPoint> keypoints_1; 
@@ -32,6 +41,7 @@ public:
 
   //-- 
   Mat estimatePose(Feature f1, Feature f2);
+  void initializeFactorGraph();
 
 private:
   Ptr<FastFeatureDetector> featureDetector;

@@ -71,8 +71,8 @@ int main( int argc, char** argv )
     if(imgL1.rows==0 || imgR2.rows==0) break;
 
     // Get the features between the last two frames
-    Feature f1 = featureFinder.findMatches(imgL1,imgR1,false);
-    Feature f2 = featureFinder.findMatches(imgL2,imgR2,false);
+    Feature f1 = featureFinder.findMatches(imgL1,imgR1,true);
+    Feature f2 = featureFinder.findMatches(imgL2,imgR2,true);
 
     // Assign world points to the features
     Feature f1WithWorlds = featureFinder.getWorldPoints(f1,projMat1,projMat2);
