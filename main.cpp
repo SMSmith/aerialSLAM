@@ -2,6 +2,7 @@
 #include <iostream>
 #include "opencv2/core/core.hpp"
 #include "featuredpa.h"
+#include "DynamicFactorGraph.h"
 
 using namespace cv;
 using namespace std;
@@ -31,6 +32,10 @@ int main( int argc, char** argv )
 
   //-- Create @featureFinder (Detection,Pairing,Alignment)
   FeatureDPA featureFinder;
+  DynamicFactorGraph dfg;
+
+  dfg.initializeFactorGraph();
+
   //-- Give it two images and (true/false) if you want to see the matches
   //-- @feature has keypoints for both images and the good matches between images
 
@@ -71,8 +76,8 @@ int main( int argc, char** argv )
     if(imgL1.rows==0 || imgR2.rows==0) break;
 
     // Get the features between the last two frames
-    Feature f1 = featureFinder.findMatches(imgL1,imgR1,false);
-    Feature f2 = featureFinder.findMatches(imgL2,imgR2,false);
+    Feature f1 = featureFinder.findMatches(imgL1,imgR1,true);
+    Feature f2 = featureFinder.findMatches(imgL2,imgR2,true);
 
     // Assign world points to the features
     Feature f1WithWorlds = featureFinder.getWorldPoints(f1,projMat1,projMat2);

@@ -6,7 +6,6 @@ FeatureDPA::FeatureDPA::FeatureDPA()
   extractor = ORB::create();
 }
 
-
 Feature FeatureDPA::findMatches(const Mat& img_1, const Mat& img_2, bool print)
 {
   const static bool DEBUG = false;
