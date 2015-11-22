@@ -44,44 +44,6 @@ for i=0:180
 %     xlabel('x');
 %     ylabel('y');
 %     zlabel('z');
-
-    %% Landmakrs
-    if i == 0
-        for j=1:size(indexPairs, 1)
-            landmarks = [landmarks; features1(indexPairs(j, 1), :)];
-            landmark_locations = matchedPoints1.Location;
-        end
-    else
-        [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, features1(indexPairs(:, 1), :));
-        landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
-        landmarks_and_metric = sort(landmarks_and_metric, 1);
-        size(landmarks_and_metric)
-        for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 10 landmarks each frame
-            landmark_id = landmarks_and_metric(j, 2);
-            feature_id = landmarks_and_metric(j, 3);
-            uL = matchedPoints1.Location(feature_id, 1);
-            v = matchedPoints1.Location(feature_id, 2);
-            uR = matchedPoints2.Location(feature_id, 1);
-%             matchedPoints1.Location(feature_id, 2) - matchedPoints2.Location(feature_id, 2)
-            X = world_points(j, 1);
-            Y = world_points(j, 2);
-            Z = world_points(j, 3);
-            landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
-            
-            close all;
-            figure;
-            imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
-            hold on;
-            scatter(landmark_locations(feature_id, 1), landmark_locations(feature_id, 2), 'ro');
-            
-            figure;
-            imshow(I1);
-            hold on;
-            scatter(uL, v, 'ro');
-            waitforbuttonpress;
-        end
-%         break;
-    end
     
     %% Find second frame 3d points
     I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind2, '.jpg')));
@@ -113,18 +75,20 @@ for i=0:180
 
     %% Matching 3d points between frames
     features1_partial = features1(indexPairs(:, 1), :);
-    valid_points1_partial = valid_points1(indexPairs(:, 1), :);
+%     valid_points1_partial = valid_points1(indexPairs(:, 1), :);
     features1B_partial = features1B(indexPairsB(:, 1), :);
-    valid_points1B_partial = valid_points1B(indexPairsB(:, 1), :);
+%     valid_points1B_partial = valid_points1B(indexPairsB(:, 1), :);
 
     cross_matches = matchFeatures(features1_partial, features1B_partial);
-    matched1 = valid_points1_partial(cross_matches(:, 1), :);
-    matched2 = valid_points1B_partial(cross_matches(:, 2), :);
+    matched1 = matchedPoints1(cross_matches(:, 1), :);
+    matched2 = matchedPoints2(cross_matches(:, 1), :);
+%     matched1B = matchedPoints1B(cross_matches(:, 2), :);
 %     figure;
-%     showMatchedFeatures(I1, I1B, matched1, matched2);
+%     showMatchedFeatures(I1, I1B, matched1, matched1B);
 
     world_points_partial = world_points(cross_matches(:, 1), :);
     world_pointsB_partial = world_pointsB(cross_matches(:, 2), :);
+    cross_matched_features = features1_partial(cross_matches(:, 1), :);
 %     figure;
 %     hold on;
 %     axis equal;
@@ -194,6 +158,55 @@ for i=0:180
 %     xlabel('x');
 %     ylabel('y');
 %     zlabel('z');
+
+    %% Landmarks
+    matched1_inliers = matched1.Location(best_inlier_indices, :); 
+    matched2_inliers = matched2.Location(best_inlier_indices, :); 
+                
+    if i == 0
+        for j=1:size(best_inlier_indices, 2)
+            j
+            landmarks = [landmarks; cross_matched_features(best_inlier_indices(j), :)];
+        end
+        landmark_locations = matched1.Location;  % for plotting
+    else
+        [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :));
+        landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
+        landmarks_and_metric = sort(landmarks_and_metric, 1);
+        size(landmarks_and_metric)
+        for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 10 landmarks each frame
+            landmark_id = landmarks_and_metric(j, 2)
+            feature_id = landmarks_and_metric(j, 3)
+ 
+            if feature_id <= size(matched1_inliers, 1)
+                uL = matched1_inliers(feature_id, 1);
+                v = matched1_inliers(feature_id, 2);
+                uR = matched2_inliers(feature_id, 1);
+                
+                matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
+                
+                X = world_points(j, 1);
+                Y = world_points(j, 2);
+                Z = world_points(j, 3);
+                landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
+
+                if i > 33
+                    figure(1);
+                    imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
+                    hold on;
+                    scatter(landmark_locations(landmark_id, 1), landmark_locations(landmark_id, 2), 'ro');
+
+                    figure(2);
+                    imshow(I1);
+                    hold on;
+                    scatter(uL, v, 'ro');
+                    waitforbuttonpress;
+                end
+            end
+        end
+%         break;
+    end
+    
 end
 
 %% Write output
