@@ -11,7 +11,7 @@ cam2_matrix = cameraMatrix(camera_params, eye(3), [0.1621, 0, 0]);
 path = [eye(4)];
 landmarks = [];
 landmark_output = [];
-pose_output = [];
+pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 for i=0:180
 % for i=0:633
     ind1 = sprintf('%03d', i)
@@ -160,7 +160,7 @@ for i=0:180
     cur_pos = path(:, :, end) * T;
     path(:, :, i+1) = cur_pos;
     cur_pos_2 = cur_pos';
-    pose_output = [pose_output; [i, cur_pos_2(:)']];
+    pose_output = [pose_output; [i+1, cur_pos_2(:)']];
     
 %     world_pointsB_partial_inliers_transformed = [];
 %     world_points_partial_inliners = world_points_partial(best_inlier_indices, :);
