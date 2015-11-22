@@ -170,45 +170,45 @@ for i=0:180
 %         end
         landmarks = cross_matched_features(best_inlier_indices, :);
         landmark_locations = matched1_inliers;  % for plotting
-    else
-        [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :));
-        landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
-        landmarks_and_metric = sortrows(landmarks_and_metric, 1);
-        size(landmarks_and_metric)
-        landmark_ids = [];
-        feature_ids = [];
-        for j=1:min(50, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
-            landmark_id = landmarks_and_metric(j, 2);
-            feature_id = landmarks_and_metric(j, 3);
-            landmark_ids = [landmark_ids; landmark_id];
-            feature_ids = [feature_ids; feature_id];
- 
-            if feature_id <= size(matched1_inliers, 1)
-                uL = matched1_inliers(feature_id, 1);
-                v = matched1_inliers(feature_id, 2);
-                uR = matched2_inliers(feature_id, 1);
-                
-%                 matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
-                
-                X = world_points(j, 1);
-                Y = world_points(j, 2);
-                Z = world_points(j, 3);
-                landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
-            end
-        end
-        if i > 33
-            figure(1);
-            imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
-            hold on;
-            scatter(landmark_locations(landmark_ids, 1), landmark_locations(landmark_ids, 2), 'ro');
+    end
+    
+    [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :));
+    landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
+    landmarks_and_metric = sortrows(landmarks_and_metric, 1);
+    size(landmarks_and_metric)
+    landmark_ids = [];
+    feature_ids = [];
+    for j=1:min(50, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
+        landmark_id = landmarks_and_metric(j, 2);
+        feature_id = landmarks_and_metric(j, 3);
+        landmark_ids = [landmark_ids; landmark_id];
+        feature_ids = [feature_ids; feature_id];
 
-            figure(2);
-            imshow(I1);
-            hold on;
-            scatter(matched1_inliers(feature_ids, 1), matched1_inliers(feature_ids, 2), 'ro');
-            waitforbuttonpress;
+        if feature_id <= size(matched1_inliers, 1)
+            uL = matched1_inliers(feature_id, 1);
+            v = matched1_inliers(feature_id, 2);
+            uR = matched2_inliers(feature_id, 1);
+
+%                 matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
+
+            X = world_points(j, 1);
+            Y = world_points(j, 2);
+            Z = world_points(j, 3);
+            landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
         end
     end
+%         if i > 33
+%             figure(1);
+%             imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
+%             hold on;
+%             scatter(landmark_locations(landmark_ids, 1), landmark_locations(landmark_ids, 2), 'ro');
+% 
+%             figure(2);
+%             imshow(I1);
+%             hold on;
+%             scatter(matched1_inliers(feature_ids, 1), matched1_inliers(feature_ids, 2), 'ro');
+%             waitforbuttonpress;
+%         end
     
 end
 
