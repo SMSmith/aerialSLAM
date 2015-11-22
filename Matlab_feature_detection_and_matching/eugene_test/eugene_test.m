@@ -49,6 +49,7 @@ for i=0:180
     if i == 0
         for j=1:size(indexPairs, 1)
             landmarks = [landmarks; features1(indexPairs(j, 1), :)];
+            landmark_locations = matchedPoints1.Location;
         end
     else
         [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, features1(indexPairs(:, 1), :));
@@ -66,6 +67,18 @@ for i=0:180
             Y = world_points(j, 2);
             Z = world_points(j, 3);
             landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
+            
+            close all;
+            figure;
+            imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
+            hold on;
+            scatter(landmark_locations(feature_id, 1), landmark_locations(feature_id, 2), 'ro');
+            
+            figure;
+            imshow(I1);
+            hold on;
+            scatter(uL, v, 'ro');
+            waitforbuttonpress;
         end
 %         break;
     end
