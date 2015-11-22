@@ -9,7 +9,10 @@ cam1_matrix = cameraMatrix(camera_params, eye(3), [0, 0, 0]);
 cam2_matrix = cameraMatrix(camera_params, eye(3), [0.1621, 0, 0]);
 
 path = [eye(4)];
-for i=0:633
+landmarks = [];
+landmark_output = [];
+pose_output = [];
+for i=0:180
     ind1 = sprintf('%03d', i)
     ind2 = sprintf('%03d', i+1);
     
@@ -41,6 +44,29 @@ for i=0:633
 %     ylabel('y');
 %     zlabel('z');
 
+    %% Landmakrs
+    if i == 0
+        for j=1:size(indexPairs, 1)
+            landmarks = [landmarks; features1(indexPairs(j, 1), :)];
+        end
+    else
+        [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, features1(indexPairs(:, 1), :));
+        landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
+        landmarks_and_metric = sort(landmarks_and_metric, 1);
+        size(landmarks_and_metric)
+        for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 10 landmarks each frame
+            landmark_id = landmarks_and_metric(j, 2);
+            feature_id = landmarks_and_metric(j, 3);
+            uL = valid_points1.Location(feature_id, 1);
+            v = valid_points1.Location(feature_id, 2);
+            uR = valid_points2.Location(feature_id, 1);
+            X = world_points(j, 1);
+            Y = world_points(j, 2);
+            Z = world_points(j, 3);
+            landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
+        end
+    end
+    
     %% Find second frame 3d points
     I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind2, '.jpg')));
     I2B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/right', ind2, '.jpg')));
@@ -130,6 +156,8 @@ for i=0:633
     
     cur_pos = path(:, :, end) * T;
     path(:, :, i+1) = cur_pos;
+    cur_pos_2 = cur_pos';
+    pose_output = [pose_output; [i, cur_pos_2(:)']];
     
 %     world_pointsB_partial_inliers_transformed = [];
 %     world_points_partial_inliners = world_points_partial(best_inlier_indices, :);
@@ -151,6 +179,10 @@ for i=0:633
 %     ylabel('y');
 %     zlabel('z');
 end
+
+%% Write output
+dlmwrite('landmark_output.txt', landmark_output, 'delimiter', ' ');
+dlmwrite('pose_output.txt', pose_output, 'delimiter', ' ');
 
 %% Plot
 % Forward is +x, left is +y, up is +z
