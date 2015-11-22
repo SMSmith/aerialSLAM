@@ -10,6 +10,7 @@ cam2_matrix = cameraMatrix(camera_params, eye(3), [0.1621, 0, 0]);
 
 path = [eye(4)];
 landmarks = [];
+landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 for i=0:180
@@ -163,13 +164,19 @@ for i=0:180
     matched1_inliers = matched1.Location(best_inlier_indices, :); 
     matched2_inliers = matched2.Location(best_inlier_indices, :); 
                 
-    if i == 0
-%         for j=1:size(best_inlier_indices, 2)
-%             j
-%             landmarks = [landmarks; cross_matched_features(best_inlier_indices(j), :)];
-%         end
-        landmarks = cross_matched_features(best_inlier_indices, :);
-        landmark_locations = matched1_inliers;  % for plotting
+%     if i == 0
+% %         for j=1:size(best_inlier_indices, 2)
+% %             j
+% %             landmarks = [landmarks; cross_matched_features(best_inlier_indices(j), :)];
+% %         end
+%         landmarks = cross_matched_features(best_inlier_indices, :);
+%         landmark_locations = matched1_inliers;  % for plotting
+%     end
+
+    if mod(i, 25) == 0
+        landmarks = [landmarks; cross_matched_features(best_inlier_indices, :)];
+        landmark_locations = [landmark_locations; matched1_inliers];  % for plotting
+        size(landmarks)
     end
     
     [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :));
