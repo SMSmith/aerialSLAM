@@ -38,6 +38,8 @@ for i=0:180
 %     showMatchedFeatures(I1, I2, matchedPoints1, matchedPoints2);
 
     world_points = triangulate(matchedPoints1, matchedPoints2, cam1_matrix, cam2_matrix);
+    world_points = [-world_points(:, 3), -world_points(:, 1), world_points(:, 2)];
+
 %     figure;
 %     hold on;
 %     axis equal;
@@ -66,6 +68,7 @@ for i=0:180
 %     showMatchedFeatures(I1B, I2B, matchedPoints1B, matchedPoints2B);
 
     world_pointsB = triangulate(matchedPoints1B, matchedPoints2B, cam1_matrix, cam2_matrix);
+    world_pointsB = [-world_pointsB(:, 3), -world_pointsB(:, 1), world_pointsB(:, 2)];
 %     figure;
 %     hold on;
 %     axis equal;
@@ -228,9 +231,9 @@ dlmwrite('pose_output.txt', pose_output, 'delimiter', ' ');
 figure;
 hold on;
 axis equal;
-xs = -squeeze(path(3, 4, :));
-ys = squeeze(path(1, 4, :));
-zs = squeeze(path(2, 4, :));
+xs = squeeze(path(1, 4, :));
+ys = squeeze(path(2, 4, :));
+zs = squeeze(path(3, 4, :));
 plot3(xs, ys, zs);
 xlabel('x');
 ylabel('y');
