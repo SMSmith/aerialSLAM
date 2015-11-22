@@ -175,9 +175,13 @@ for i=0:180
         landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
         landmarks_and_metric = sortrows(landmarks_and_metric, 1);
         size(landmarks_and_metric)
-        for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 10 landmarks each frame
-            landmark_id = landmarks_and_metric(j, 2)
-            feature_id = landmarks_and_metric(j, 3)
+        landmark_ids = [];
+        feature_ids = [];
+        for j=1:min(50, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
+            landmark_id = landmarks_and_metric(j, 2);
+            feature_id = landmarks_and_metric(j, 3);
+            landmark_ids = [landmark_ids; landmark_id];
+            feature_ids = [feature_ids; feature_id];
  
             if feature_id <= size(matched1_inliers, 1)
                 uL = matched1_inliers(feature_id, 1);
@@ -190,23 +194,20 @@ for i=0:180
                 Y = world_points(j, 2);
                 Z = world_points(j, 3);
                 landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
-
-                if i > 33
-                    figure(1);
-                    imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
-                    hold on;
-                    scatter(landmark_locations(landmark_id, 1), landmark_locations(landmark_id, 2), 'ro');
-
-                    figure(2);
-                    imshow(I1);
-                    hold on;
-                    scatter(uL, v, 'ro');
-                    waitforbuttonpress;
-                    break;
-                end
             end
         end
-%         break;
+        if i > 33
+            figure(1);
+            imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
+            hold on;
+            scatter(landmark_locations(landmark_ids, 1), landmark_locations(landmark_ids, 2), 'ro');
+
+            figure(2);
+            imshow(I1);
+            hold on;
+            scatter(matched1_inliers(feature_ids, 1), matched1_inliers(feature_ids, 2), 'ro');
+            waitforbuttonpress;
+        end
     end
     
 end
