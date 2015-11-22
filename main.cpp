@@ -7,10 +7,27 @@
 using namespace cv;
 using namespace std;
 
+void stereoVision();
+void factorGraph();
+
 /** @function main */
 int main( int argc, char** argv )
 {
+  // stereoVision();
+  factorGraph(); 
 
+  return 0;
+}
+
+void factorGraph() {
+  DynamicFactorGraph graph;
+  graph.loadInitialPoses("datasets/fakeInitialPoses.txt");
+  graph.loadLandmarks("datasets/fakeLandmarks.txt");
+  cout << " Loaded everything " << endl;
+  graph.solve();
+}
+
+void stereoVision() {
   //-- This is just a demo for showing how to read two images and then get the matched features
   // Mat img_1L = imread( "datasets/cmu_16662_p2/sensor_data/left000.jpg", CV_LOAD_IMAGE_GRAYSCALE );
   // Mat img_1R = imread( "datasets/cmu_16662_p2/sensor_data/right000.jpg", CV_LOAD_IMAGE_GRAYSCALE );
@@ -32,9 +49,7 @@ int main( int argc, char** argv )
 
   //-- Create @featureFinder (Detection,Pairing,Alignment)
   FeatureDPA featureFinder;
-  DynamicFactorGraph dfg;
-
-  dfg.initializeFactorGraph();
+  
 
   //-- Give it two images and (true/false) if you want to see the matches
   //-- @feature has keypoints for both images and the good matches between images
@@ -116,7 +131,4 @@ int main( int argc, char** argv )
     i++;
   }
 
-  return 0;
 }
-
-
