@@ -13,6 +13,7 @@ landmarks = [];
 landmark_output = [];
 pose_output = [];
 for i=0:180
+% for i=0:633
     ind1 = sprintf('%03d', i)
     ind2 = sprintf('%03d', i+1);
     
@@ -57,14 +58,16 @@ for i=0:180
         for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 10 landmarks each frame
             landmark_id = landmarks_and_metric(j, 2);
             feature_id = landmarks_and_metric(j, 3);
-            uL = valid_points1.Location(feature_id, 1);
-            v = valid_points1.Location(feature_id, 2);
-            uR = valid_points2.Location(feature_id, 1);
+            uL = matchedPoints1.Location(feature_id, 1);
+            v = matchedPoints1.Location(feature_id, 2);
+            uR = matchedPoints2.Location(feature_id, 1);
+%             matchedPoints1.Location(feature_id, 2) - matchedPoints2.Location(feature_id, 2)
             X = world_points(j, 1);
             Y = world_points(j, 2);
             Z = world_points(j, 3);
             landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
         end
+%         break;
     end
     
     %% Find second frame 3d points
