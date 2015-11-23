@@ -13,8 +13,8 @@ landmarks = [];
 landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
-for i=0:180
-% for i=0:633
+% for i=0:180
+for i=0:633
     ind1 = sprintf('%03d', i)
     ind2 = sprintf('%03d', i+1);
     
@@ -38,7 +38,7 @@ for i=0:180
 %     showMatchedFeatures(I1, I2, matchedPoints1, matchedPoints2);
 
     world_points = triangulate(matchedPoints1, matchedPoints2, cam1_matrix, cam2_matrix);
-    world_points = [-world_points(:, 3), -world_points(:, 1), world_points(:, 2)];
+    world_points = [-world_points(:, 3), world_points(:, 1), world_points(:, 2)];
 
 %     figure;
 %     hold on;
@@ -68,7 +68,7 @@ for i=0:180
 %     showMatchedFeatures(I1B, I2B, matchedPoints1B, matchedPoints2B);
 
     world_pointsB = triangulate(matchedPoints1B, matchedPoints2B, cam1_matrix, cam2_matrix);
-    world_pointsB = [-world_pointsB(:, 3), -world_pointsB(:, 1), world_pointsB(:, 2)];
+    world_pointsB = [-world_pointsB(:, 3), world_pointsB(:, 1), world_pointsB(:, 2)];
 %     figure;
 %     hold on;
 %     axis equal;
