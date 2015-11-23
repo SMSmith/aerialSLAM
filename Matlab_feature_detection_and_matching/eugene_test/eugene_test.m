@@ -103,14 +103,14 @@ for i=0:633
 %     zlabel('z');
 
     %% estimate transform between frames
-    n_iters = 100;
+    n_iters = 200;
     inlier_thresh = 0.1;
     num_points = size(world_points_partial, 1);
     % RANSAC
     best_inlier_indices = [];
     best_outlier_indices = [];
     for UNUSED=1:n_iters
-        random_indices = datasample(1:num_points, 3, 'Replace', false)';
+        random_indices = datasample(1:num_points, 5, 'Replace', false)';
         [tr, ~] = estimateRigidTransform(world_points_partial(random_indices, :)', world_pointsB_partial(random_indices, :)');
         
         % count inliers
