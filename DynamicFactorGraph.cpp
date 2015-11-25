@@ -46,9 +46,27 @@ void DynamicFactorGraph::loadInitialPoses(std::string initialPoseFile) {
 	}
 }
 
+// IMU?
+void DynamicFactorGraph::loadIMU(std::string imuFile) {
+	std::ifstream imu(imuFile.c_str());
+
+	noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas((Vector(6) << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1));
+
+	int poseID;
+	MatrixRowMajor odom(4,4);
+
+	while(imu >> poseID) {
+		for(int i=0; i<16; i++) {
+			imu >> odom.data()[i];
+		}
+
+		graph.add(BetweenFactor<Pose3>(poseID, poseID+1, Pose3(odom), odometryNoise));
+	}
+}
+
 /********************************************************************************
 * This reads in the landmarks from file.  File format is:						*
-* xID lID uL uR v X Y zero 														*
+* xID lID uL uR v X Y Z 														*
 * where xID is the state where the landmark was seen, lID is the landmark lID, 	*
 * uL and uR are the horizontal pixel coordinates of the landmarks, v is the 	*
 * vertical pixel coordinate (they align, so it should be the same?), and X,Y,Z 	*
@@ -59,7 +77,7 @@ void DynamicFactorGraph::loadLandmarks(std::string landmarkFile) {
 	size_t x, l;
 
 	// Noise model for camera
-	const noiseModel::Isotropic::shared_ptr cameraNoise = noiseModel::Isotropic::Sigma(3,1);
+	const noiseModel::Isotropic::shared_ptr cameraNoise = noiseModel::Isotropic::Sigma(3,.1);
 	// Camera calibration matrix, params are in *.h
 	const Cal3_S2Stereo::shared_ptr K(new Cal3_S2Stereo(fx,fy,s,u0,v0,b));
 
@@ -90,5 +108,10 @@ void DynamicFactorGraph::solve() {
 
 	// Make the output usable
 	Values poseValues = result.filter<Pose3>();
-	poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+	// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+
+	std::cout << "x,y,z" << std::endl;
+	for(int i=1; i<poseValues.size(); i++) {
+		std::cout << poseValues.at<Pose3>(Symbol('x',i)).x() << "," << poseValues.at<Pose3>(Symbol('x',i)).y() << "," << poseValues.at<Pose3>(Symbol('x',i)).z() << std::endl;
+	}
 }

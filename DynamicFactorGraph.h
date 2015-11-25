@@ -12,6 +12,7 @@
 #include <gtsam/slam/StereoFactor.h>
 #include <gtsam/nonlinear/LevenbergMarquardtOptimizer.h>
 #include <gtsam/nonlinear/NonlinearEquality.h>
+#include <gtsam/slam/BetweenFactor.h>
 // #include <gtsam/config.h>
 // #include <gtsam/base/types.h>
 #include <vector>
@@ -28,6 +29,7 @@ public:
   void                      loadInitialPoses(std::string initialPoseFile);
   void                      loadLandmarks(std::string landmarkFile);
   void                      solve();
+  void                      loadIMU(std::string imuFile);
 
 private:
   NonlinearFactorGraph      graph;

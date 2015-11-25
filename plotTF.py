@@ -16,7 +16,7 @@ from math import sqrt
 ###################################################################################################
 def main(args):
 	inputFile = args[0]
-	makeMovie = False
+	makeMovie = True
 	try:
 		if args[1] == '-m':
 			makeMovie = True
@@ -29,10 +29,14 @@ def main(args):
 	with open(inputFile, 'rb') as csvFile:
 		csvReader = csv.DictReader(csvFile)
 		for row in csvReader:
-			x.append(float(row['T[3]']))
-			y.append(float(row['T[7]']))
-			z.append(float(row['T[11]']))
-			t.append(float(row['time']))
+			# x.append(float(row['T[3]']))
+			# y.append(float(row['T[7]']))
+			# z.append(float(row['T[11]']))
+			# t.append(float(row['time']))
+			x.append(float(row['x']))
+			y.append(float(row['y']))
+			z.append(float(row['z']))
+			t.append(0)
 
 	def getData(num,data,line):
 		plt.title(t[num])
@@ -59,7 +63,7 @@ def main(args):
 	lineAnimation = animation.FuncAnimation(fig1, getData, steps, fargs=(data,l), interval=40)	
 
 	if makeMovie:
-		lineAnimation.save('stereoVision.mp4',writer='avconv')
+		lineAnimation.save('factorGraph.mp4',writer='avconv')
 
 	plt.show()
 

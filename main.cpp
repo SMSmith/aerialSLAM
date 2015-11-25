@@ -21,9 +21,11 @@ int main( int argc, char** argv )
 
 void factorGraph() {
   DynamicFactorGraph graph;
-  graph.loadInitialPoses("datasets/fakeInitialPoses.txt");
-  graph.loadLandmarks("datasets/fakeLandmarks.txt");
-  cout << " Loaded everything " << endl;
+  // graph.initializeFactorGraph();
+  graph.loadInitialPoses("datasets/pose_output.txt");
+  graph.loadLandmarks("datasets/landmark_output.txt");
+  graph.loadIMU("preIntegratedIMU.csv");
+  // cout << " Loaded everything " << endl;
   graph.solve();
 }
 
