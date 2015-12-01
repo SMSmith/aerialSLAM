@@ -16,6 +16,7 @@ set( NAME_SRC
 INCLUDE_DIRECTORIES( ${CMAKE_CURRENT_SOURCE_DIR}/include ${GTSAM_INCLUDE_DIR} ${Boost_INCLUDE_DIRS})
 link_directories( ${CMAKE_BINARY_DIR}/bin ${GTSAM_LINK_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 add_executable( robostat ${NAME_SRC} ${NAME_HEADERS} )
 
 target_link_libraries( robostat ${OpenCV_LIBS} ${GTSAM_LIBS} ${Boost_LIBRARIES} tbb tbbmalloc gtsam)
