@@ -46,8 +46,10 @@ void DynamicFactorGraph::loadInitialPoses(std::string initialPoseFile) {
 	}
 }
 
-// IMU?
-void DynamicFactorGraph::loadIMU(std::string imuFile) {
+/********************************************************************************
+* Load the IMU data as factors from matlab preprocessed data 					*
+********************************************************************************/
+void DynamicFactorGraph::loadIMUFactors(std::string imuFile) {
 	std::ifstream imu(imuFile.c_str());
 
 	noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas((Vector(6) << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1));
@@ -62,6 +64,57 @@ void DynamicFactorGraph::loadIMU(std::string imuFile) {
 
 		graph.add(BetweenFactor<Pose3>(poseID, poseID+1, Pose3(odom), odometryNoise));
 	}
+}
+
+void DynamicFactorGraph::loadIMUData(std::string accel, std::string angular, std::string imuTime, std::string imageTime) {
+	std::string value;
+
+	std::ifstream imuFile(imuTime.c_str());
+	while(imuFile.good()) {
+		getline(imuFile,value,',');
+		imuTimestamps.push_back(std::stof(value));
+	}
+
+	int imuLength = imuTimestamps.size();
+
+	std::ifstream accelFile(accel.c_str());
+	int i=0;
+	std::vector<float> a;
+	accelMeasurements.push_back(a);
+	while(accelFile.good()) {
+		if(accelMeasurements[i].size()==imuLength) {
+			std::vector<float> b;
+			accelMeasurements.push_back(b);
+			i++;
+		}
+		getline(accelFile,value,',');
+		accelMeasurements[i].push_back(std::stof(value));
+	}
+
+	std::ifstream angularFile(angular.c_str());
+	i=0;
+	std::vector<float> c;
+	angularMeasurements.push_back(c);
+	while(angularFile.good()) {
+		if(angularMeasurements[i].size()==imuLength) {
+			std::vector<float> d;
+			angularMeasurements.push_back(d);
+			i++;
+		}
+		getline(angularFile,value,',');
+		angularMeasurements[i].push_back(std::stof(value));
+	}
+
+	std::ifstream imageFile(imageTime.c_str());
+	while(imageFile.good()) {
+		getline(imageFile,value,',');
+		imageTimestamps.push_back(std::stof(value));
+	}
+
+	// std::cout << accelMeasurements[0].size() << " " << angularMeasurements.size() << " " << imuTimestamps.size() << " " << imageTimestamps.size() << " " << std::endl;
+	// std::cout << accelMeasurements[0].size() << " " << accelMeasurements[1].size() << " " << accelMeasurements[2].size() << std::endl;
+	// std::cout << accelMeasurements[0][0] << " " << accelMeasurements[1][0] << " " << accelMeasurements[2][0] << std::endl;
+	// std::cout << accelMeasurements[0][accelMeasurements[0].size()-1] << " " << accelMeasurements[1][accelMeasurements[1].size()-1] << " " << accelMeasurements[2][accelMeasurements[2].size()-1] << std::endl;
 }
 
 /********************************************************************************
@@ -99,19 +152,43 @@ void DynamicFactorGraph::loadLandmarks(std::string landmarkFile) {
 void DynamicFactorGraph::solve() {
 	// The first pose will probably be identity at (0,0,0), as such, 
 	// we don't want it to move during optimaziotn, so the following is done:
-	Pose3 firstPose = initialEstimate.at<Pose3>(Symbol('x',1));
-	graph.push_back(NonlinearEquality<Pose3>(Symbol('x',1),firstPose));
+	Pose3 firstPose = initialEstimate.at<Pose3>(Symbol('x',0));
+	graph.push_back(NonlinearEquality<Pose3>(Symbol('x',0),firstPose));
+
+	Values poseValues;
 
 	// Now we just solve the optimization algorithm
-	LevenbergMarquardtOptimizer optimizer = LevenbergMarquardtOptimizer(graph, initialEstimate);
-	Values result = optimizer.optimize();
+	try {
+		LevenbergMarquardtOptimizer optimizer = LevenbergMarquardtOptimizer(graph, initialEstimate);
+		Values result = optimizer.optimize();
 
-	// Make the output usable
-	Values poseValues = result.filter<Pose3>();
-	// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+		// Make the output usable
+		poseValues = result.filter<Pose3>();
+		// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+	}
+	catch(...) {
+		std::cout << "Using Gauss Newton because LM failed" << std::endl;
+		GaussNewtonParams params;
+		params.linearSolverType = NonlinearOptimizerParams::MULTIFRONTAL_CHOLESKY;
+		GaussNewtonOptimizer optimizer2 = GaussNewtonOptimizer(graph,initialEstimate,params);
+		Values result2 = optimizer2.optimize();
+
+		// Make the output usable
+		poseValues = result2.filter<Pose3>();
+		// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+	}
 
 	std::cout << "x,y,z" << std::endl;
 	for(int i=1; i<poseValues.size(); i++) {
 		std::cout << poseValues.at<Pose3>(Symbol('x',i)).x() << "," << poseValues.at<Pose3>(Symbol('x',i)).y() << "," << poseValues.at<Pose3>(Symbol('x',i)).z() << std::endl;
 	}
+
+	// Values landmarkValues = result.filter<Point3>();
+	// std::cout << "x,y,z" << std::endl;
+	// for(int i=1; i<landmarkValues.size(); i++) {
+	// 	try {
+	// 		std::cout << landmarkValues.at<Point3>(Symbol('l',i)).x() << "," << landmarkValues.at<Point3>(Symbol('l',i)).y() << "," << landmarkValues.at<Point3>(Symbol('l',i)).z() << std::endl;
+	// 	}
+	// 	catch (...){}
+	// }
 }

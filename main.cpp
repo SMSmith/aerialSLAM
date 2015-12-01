@@ -24,7 +24,8 @@ void factorGraph() {
   // graph.initializeFactorGraph();
   graph.loadInitialPoses("datasets/pose_output.txt");
   graph.loadLandmarks("datasets/landmark_output.txt");
-  graph.loadIMU("preIntegratedIMU.csv");
+  graph.loadIMUFactors("datasets/preIntegratedIMU.csv");
+  graph.loadIMUData("datasets/body_accel.csv","datasets/body_angvel.csv","datasets/imu_timestamps.csv","datasets/image_timestamps.csv");
   // cout << " Loaded everything " << endl;
   graph.solve();
 }
