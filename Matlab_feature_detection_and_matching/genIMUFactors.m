@@ -29,7 +29,7 @@ for label = 2:nImages
         dR = dR*expm(w);
         counter_IMU = counter_IMU + 1;
     end
-    Tn = pT*[dR,dP;0,0,0,1];
+    Tn = pT*[dR,dP/100;0,0,0,1];
     P(:,label) = Tn(1:3,4);
     fprintf(formatSpec,label-2,Tn');
     fprintf(fileID,formatSpec,label-2,Tn');
