@@ -1,4 +1,4 @@
-fileID = fopen('preIntegratedIMU.csv','w');
+fileID = fopen('preIntegratedIMUfixed1.csv','w');
 formatSpec = '%i %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n';
 nImages = size(image_timestamps,2);
 nIMU = size(imu_timestamps,2);
@@ -12,19 +12,25 @@ while time < image_timestamps(1,29)
     counter_time = counter_time + 1;
     time = imu_timestamps(1,counter_time);
 end
-bias = [mean(body_accel(1,1:counter_time));mean(body_accel(2,1:counter_time));mean(body_accel(3,1:counter_time))];
+%z = 1.0019*
+bias = [1.0*mean(body_accel(1,1:counter_time));1.0*mean(body_accel(2,1:counter_time));1.0012*mean(body_accel(3,1:counter_time))];
+% bias = [1.0*mean(body_accel(1,1:counter_time));1.0*mean(body_accel(2,1:counter_time));1.0*mean(body_accel(3,1:counter_time))];
 imustd = [std(body_accel(1,1:counter_time));std(body_accel(2,1:counter_time));std(body_accel(3,1:counter_time))];
 fprintf('Bias Accel\n');
-disp(bias)
-fprintf('Accel std\n');
-disp(imustd)
+% disp(bias)
+fprintf('%.7f %.7f %.7f\n',bias);
+% fprintf('Accel std\n');
+% disp(imustd)
 
-bias_velw = [mean(body_angvel(1,1:counter_time));mean(body_angvel(2,1:counter_time));mean(body_angvel(3,1:counter_time))];
+bias_velw = [mean(body_angvel(1,1:counter_time));mean(body_angvel(2,1:counter_time));1*mean(body_angvel(3,1:counter_time))];
 imustd_velw = [std(body_angvel(1,1:counter_time));std(body_angvel(2,1:counter_time));std(body_angvel(3,1:counter_time))];
 fprintf('Bias Gyro\n');
-disp(bias_velw)
-fprintf('Gyro std\n');
-disp(imustd_velw)
+% disp(bias_velw)
+fprintf('%.7f %.7f %.7f\n',bias_velw);
+% fprintf('Gyro std\n');
+% disp(imustd_velw)
+% bias = [0;0;9.8];
+% bias_velw = [0;0;0];
 
 for label = 2:nImages
     dP = [0;0;0];  
@@ -48,11 +54,14 @@ for label = 2:nImages
         dR = dR*expm(w);
         counter_IMU = counter_IMU + 1;
     end
-    Tn = pT*[dR,dP/10;0,0,0,1];
+    dP = [dP(1)/10;dP(2)/10;dP(3)];
+    Tn = pT*[dR,dP;0,0,0,1];
+    Tout = [dR,dP;0,0,0,1];
     P(:,label) = Tn(1:3,4);
-    %fprintf(formatSpec,label-2,Tn');
-    fprintf(fileID,formatSpec,label-2,Tn');
+    fprintf(formatSpec,label-2,Tout');
+%     fprintf(fileID,formatSpec,label-2,Tout');
     pT = Tn;
 end
+fprintf('\nError: %f %f %f\n',P(:,size(P,2)));
 fclose(fileID);
-%plot3(P(1,:),P(2,:),P(3,:));
+plot3(P(1,:)+10,P(2,:),P(3,:),'b');
