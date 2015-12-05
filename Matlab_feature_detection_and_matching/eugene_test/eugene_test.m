@@ -14,19 +14,19 @@ landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 % for i=0:180
-% for i=0:633
-for i=0:4067
-%     ind1 = sprintf('%03d', i)
-%     ind2 = sprintf('%03d', i+1);
-    ind1 = sprintf('%04d', i)
-    ind2 = sprintf('%04d', i+1);
+for i=0:633
+% for i=0:4067
+    ind1 = sprintf('%03d', i)
+    ind2 = sprintf('%03d', i+1);
+%     ind1 = sprintf('%04d', i)
+%     ind2 = sprintf('%04d', i+1);
     
     
     % Find first frame 3d points
-%     I1 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind1, '.jpg')));
-%     I2 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/right', ind1, '.jpg')));
-    I1 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/left', ind1, '.jpg')));
-    I2 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/right', ind1, '.jpg')));
+    I1 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind1, '.jpg')));
+    I2 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/right', ind1, '.jpg')));
+%     I1 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/left', ind1, '.jpg')));
+%     I2 = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/right', ind1, '.jpg')));
 %     figure;
 %     imshow(I1);
 %     figure;
@@ -55,11 +55,11 @@ for i=0:4067
 %     zlabel('z');
     
     %% Find second frame 3d points
-%     I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind2, '.jpg')));
-%     I2B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/right', ind2, '.jpg')));
+    I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/left', ind2, '.jpg')));
+    I2B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p2/sensor_data/right', ind2, '.jpg')));
 %     figure;
-    I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/left', ind2, '.jpg')));
-    I2B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/right', ind2, '.jpg')));
+%     I1B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/left', ind2, '.jpg')));
+%     I2B = rgb2gray(imread(strcat('../../datasets/cmu_16662_p3/NSHLevel2_Images/NSHLevel2_Images/NSHLevel2_Images/right', ind2, '.jpg')));
 %     imshow(I1B);
 %     figure;
 %     imshow(I2B);
@@ -250,3 +250,5 @@ plot3(xs, ys, zs);
 xlabel('x');
 ylabel('y');
 zlabel('z');
+
+% scatter3(landmark_output(:, 6), landmark_output(:, 7), landmark_output(:, 8), '.');
