@@ -39,8 +39,9 @@ private:
   Values                    initialEstimate;
   std::vector<std::vector<float> >        accelMeasurements;
   std::vector<std::vector<float> >        angularMeasurements;
-  std::vector<float>                 imuTimestamps;
-  std::vector<float>                 imageTimestamps;
+  std::vector<float>        imuTimestamps;
+  std::vector<float>        imageTimestamps;
+  Key                       getKey(char type, int index);
 
   // Camera Calibration
   static constexpr double fx = 164.255034407511;
