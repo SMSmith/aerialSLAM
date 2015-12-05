@@ -185,7 +185,7 @@ for i=0:633
 %         landmark_locations = matched1_inliers;  % for plotting
 %     end
 
-    if mod(i, 25) == 0
+    if mod(i, 200) == 0
         landmarks = [landmarks; cross_matched_features(best_inlier_indices, :)];
         landmark_locations = [landmark_locations; matched1_inliers];  % for plotting
         size(landmarks)
