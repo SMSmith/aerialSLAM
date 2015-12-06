@@ -272,7 +272,7 @@ import gtsam.*
 % landmark_output = csvread('VO_stereo_factors_large.txt');
 pose_output = csvread('pose_output.txt');
 landmark_output = csvread('landmark_output.txt');
-imu = csvread('preIntegratedIMUfixed.csv');
+imu = csvread('preIntegratedIMUTEMP.csv');
 
 % init
 graph = NonlinearFactorGraph;
@@ -308,7 +308,6 @@ K = Cal3_S2Stereo(...
 % end
 
 % for i=1:size(pose_output, 1)-1
-last_odometry = 0
 for i=1:size(imu, 1)
     odometry = Pose3(reshape(imu(i,2:17),4,4)');
     if i ~= 1
@@ -335,7 +334,7 @@ optimizer = LevenbergMarquardtOptimizer(graph, initial);
 result = optimizer.optimize();
 toc
 
-%% visualize initial trajectory, final trajectory, and final points
+% visualize initial trajectory, final trajectory, and final points
 figure;
 hold on;
 axis equal;
