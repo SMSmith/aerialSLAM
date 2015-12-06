@@ -1,15 +1,59 @@
-fileID = fopen('preIntegratedIMUTEMP.csv','w');
+close all;
+clear all;
+clc;
+
+fileID = fopen('preIntegratedIMUTEMP2.csv','w');
 load('../../datasets/cmu_16662_p3/NSHLevel2_data.mat');
 load('../../datasets/cmu_16662_p2/sensor_data/hand_carry.mat');
 
+% body_accel = [];
+% body_angvel = [];
+% for i=1:200 % resting
+%     body_accel = [body_accel, [0; 0; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0]];
+% end
+% for i=200:400 % rising accel
+%     body_accel = [body_accel, [0; 0; 10.8]];
+%     body_angvel = [body_angvel, [0; 0; 0;]];
+% end
+% for i=401:600 % rising decel
+%     body_accel = [body_accel, [0; 0; 8.8]];
+%     body_angvel = [body_angvel, [0; 0; 0;]];
+% end
+% for i=601:1000 % forward accel
+%     body_accel = [body_accel, [0.3; 0.3; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0]];
+% end
+% for i=1001:1500 % forward
+%     body_accel = [body_accel, [0; 0; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0]];
+% end
+% for i=1501:2000 % turn
+%     body_accel = [body_accel, [0; 0; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0.3]];
+% end
+% for i=2001:2795 % forward
+%     body_accel = [body_accel, [0; 0; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0]];
+% end
+% for i=2796:3195 % forward decel
+%     body_accel = [body_accel, [-0.3; -0.3; 9.8]];
+%     body_angvel = [body_angvel, [0; 0; 0]];
+% end
 
 formatSpec = '%i %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n';
 nImages = size(image_timestamps,2);
 nIMU = size(imu_timestamps,2);
-R2 = eye(4);
-R2(1:3, 1:3) = rotation_imu_to_leftcam;
+
+[x, y, z] = dcm2angle(rotation_imu_to_leftcam, 'XYZ');
+R2 = angle2dcm(x, pi - y, z, 'XYZ');
+% R2 = angle2dcm(pi/2, pi-pi/4, pi, 'XYZ');
+% R2 = rotation_imu_to_leftcam;
+% R2 = angle2dcm();
+
 pT = eye(4,4);
-% pT = R2;
+pT(1:3, 1:3) = R2;
+
 P = zeros(3,nImages);
 % dV = [0;0;0];
 % V = [0;0;0];
@@ -40,6 +84,15 @@ fprintf('%.7f %.7f %.7f\n',bias_velw);
 % bias = [0;0;9.8];
 % bias_velw = [0;0;0];
 dV = [0;0;0];
+
+
+
+% GTSAM setup for testing
+addpath('../../gtsam-toolbox-3.2.0-win64/gtsam_toolbox');
+import gtsam.*
+
+graph = NonlinearFactorGraph;
+initial = Values;
 for label = 2:nImages
     dP = [0;0;0];
 %     dV = [0;0;0];
@@ -61,14 +114,14 @@ for label = 2:nImages
         dV = dV + (body_accel(:,counter_IMU)-bias)*dt;
         dP = dP + dV*dt;
 
-%         w = zeros(3,3);
-%         w(1,2) = -1*(body_angvel(3,counter_IMU)-bias_velw(3))*dt;
-%         w(1,3) = (body_angvel(2,counter_IMU)-bias_velw(2))*dt;
-%         w(2,1) = (body_angvel(3,counter_IMU)-bias_velw(3))*dt;
-%         w(2,3) = -1*(body_angvel(1,counter_IMU)-bias_velw(1))*dt;
-%         w(3,1) = -1*(body_angvel(2,counter_IMU)-bias_velw(2))*dt;
-%         w(3,2) = (body_angvel(1,counter_IMU)-bias_velw(1))*dt;
-%         dR = dR*expm(w);
+        w = zeros(3,3);
+        w(1,2) = -1*(body_angvel(3,counter_IMU)-bias_velw(3))*dt;
+        w(1,3) = (body_angvel(2,counter_IMU)-bias_velw(2))*dt;
+        w(2,1) = (body_angvel(3,counter_IMU)-bias_velw(3))*dt;
+        w(2,3) = -1*(body_angvel(1,counter_IMU)-bias_velw(1))*dt;
+        w(3,1) = -1*(body_angvel(2,counter_IMU)-bias_velw(2))*dt;
+        w(3,2) = (body_angvel(1,counter_IMU)-bias_velw(1))*dt;
+        dR = dR*expm(w);
 %         dR = dR * angle2dcm(...
 %             (body_angvel(1,counter_IMU)-bias_velw(1))*dt,...
 %             (body_angvel(2,counter_IMU)-bias_velw(2))*dt,...
@@ -77,9 +130,25 @@ for label = 2:nImages
         counter_IMU = counter_IMU + 1;
     end
 %     dP = [dP(1);dP(2);dP(3)];
+
+%     dR
+%     dP
+%     dP = R2 * dP;
+%     dR = dR * R2;
+%     dR = dR * rotation_imu_to_leftcam;
+
+    % imu * R2 = cam
+
     dTr = [dR,dP;0,0,0,1];
-    
     pT = pT*dTr;
+    
+    % for testing
+    pose = eye(4);
+    pose(1:3, 4) = pT(1:3, 4);
+    pose(1:3, 1:3) = pT(1:3, 1:3) * inv(R2);
+    if mod(label, 20) == 0
+        initial.insert(symbol('x', label-1), Pose3(pose));
+    end
     
     P(:,label) = pT(1:3,4);
     fprintf(formatSpec,label-2,dTr');
@@ -87,7 +156,18 @@ for label = 2:nImages
 end
 fprintf('\nError: %f %f %f\n',P(:,size(P,2)));
 fclose(fileID);
-plot3(P(1,:),P(2,:),P(3,:),'b');
+% figure;
+% hold on;
+% axis equal;
+% plot3(P(1,:),P(2,:),P(3,:),'b');
+% xlabel('x');
+% ylabel('y');
+% zlabel('z');
+
+figure;
+hold on;
+axis equal;
+plot3DTrajectory(initial, 'r', 1, 1);
 xlabel('x');
 ylabel('y');
 zlabel('z');

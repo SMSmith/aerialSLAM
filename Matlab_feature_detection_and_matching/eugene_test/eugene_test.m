@@ -272,7 +272,7 @@ import gtsam.*
 % landmark_output = csvread('VO_stereo_factors_large.txt');
 pose_output = csvread('pose_output.txt');
 landmark_output = csvread('landmark_output.txt');
-imu = csvread('preIntegratedIMUTEMP.csv');
+imu = csvread('preIntegratedIMUTEMP2.csv');
 
 % init
 graph = NonlinearFactorGraph;
@@ -338,14 +338,16 @@ toc
 figure;
 hold on;
 axis equal;
-plot3DTrajectory(initial, 'r', 1, 0.1);
+plot3DTrajectory(initial, 'r', 1, 1);
 plot3DPoints(initial);
 % figure;
 % hold on;
 % axis equal;
 % plot3DTrajectory(result, 'g', 1, 0.1);
 % plot3DPoints(result);
-
+xlabel('x');
+ylabel('y');
+zlabel('z');
     
 % %% load the initial poses from VO
 % % row format: camera_id 4x4 pose (row, major)
