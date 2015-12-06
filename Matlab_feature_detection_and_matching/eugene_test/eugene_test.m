@@ -14,8 +14,8 @@ landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 % for i=0:180
-% for i=0:633
-for i=0:200
+for i=0:633
+% for i=0:200
 % for i=0:4067
     ind1 = sprintf('%03d', i)
     ind2 = sprintf('%03d', i+1);
@@ -201,17 +201,21 @@ for i=0:200
     size(landmarks_and_metric)
     landmark_ids = [];
     feature_ids = [];
-    for j=1:min(50, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
+    for j=1:min(5000, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
         landmark_id = landmarks_and_metric(j, 2);
+        if landmark_id ~= 4 && landmark_id ~= 1
+            continue;
+        end
 
         feature_id = landmarks_and_metric(j, 3);
         landmark_ids = [landmark_ids; landmark_id];
         feature_ids = [feature_ids; feature_id];
 
         if feature_id <= size(matched1_inliers, 1)
-            uL = matched1_inliers(feature_id, 1);
-            uR = matched2_inliers(feature_id, 1);
-            v = matched1_inliers(feature_id, 2);
+            uL = matched1_inliers(feature_id, 1)
+            uR = matched2_inliers(feature_id, 1)
+            vL = matched1_inliers(feature_id, 2)
+            vR = matched2_inliers(feature_id, 2)
 
 %                 matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
 
@@ -221,7 +225,7 @@ for i=0:200
             X = world_points_inliers(feature_id, 1);
             Y = world_points_inliers(feature_id, 2);
             Z = world_points_inliers(feature_id, 3);
-            landmark_output = [landmark_output; [i, landmark_id, uL, uR, v, X, Y, Z]];
+            landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
         end
     end
 %         if i > 33
