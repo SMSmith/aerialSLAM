@@ -201,19 +201,17 @@ for i=0:200
     size(landmarks_and_metric)
     landmark_ids = [];
     feature_ids = [];
-    for j=1:min(5000, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
+    for j=1:min(50, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
         landmark_id = landmarks_and_metric(j, 2);
-        if landmark_id ~= 5
-            continue
-        end
+
         feature_id = landmarks_and_metric(j, 3);
         landmark_ids = [landmark_ids; landmark_id];
         feature_ids = [feature_ids; feature_id];
 
         if feature_id <= size(matched1_inliers, 1)
-            uL = matched1_inliers(feature_id, 1)
-            uR = matched2_inliers(feature_id, 1)
-            v = matched1_inliers(feature_id, 2)
+            uL = matched1_inliers(feature_id, 1);
+            uR = matched2_inliers(feature_id, 1);
+            v = matched1_inliers(feature_id, 2);
 
 %                 matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
 
