@@ -13,7 +13,7 @@ imu_leftcam_R = angle2dcm(x, pi - y, z, 'XYZ');
 
 pT = eye(4,4);
 pT(1:3, 1:3) = imu_leftcam_R;
-pT(1:3, 4) = translation_imu_to_leftcam;
+% pT(1:3, 4) = translation_imu_to_leftcam;
 
 counter_IMU = 1;
 counter_time = 1;
