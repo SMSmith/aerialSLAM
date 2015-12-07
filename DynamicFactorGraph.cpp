@@ -42,7 +42,7 @@ void DynamicFactorGraph::loadInitialPoses(std::string initialPoseFile) {
 		}
 
 		// Keep track of the initial estimate based on stereo vision
-		initialEstimate.insert(Symbol('x', poseID), Pose3(m));
+		initialEstimate.insert(getKey('x',poseID),Pose3(m));
 	}
 }
 
@@ -52,20 +52,29 @@ void DynamicFactorGraph::loadInitialPoses(std::string initialPoseFile) {
 void DynamicFactorGraph::loadIMUFactors(std::string imuFile) {
 	std::ifstream imu(imuFile.c_str());
 
-	noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas((Vector(6) << 0.1, 0.1, 0.1, 0.1, 0.1, 0.1));
+	noiseModel::Diagonal::shared_ptr odometryNoise = noiseModel::Diagonal::Sigmas((Vector(6) << 0.01, 0.01, 0.01, 0.0001, 0.0001, 0.0001));
 
 	int poseID;
 	MatrixRowMajor odom(4,4);
+	Matrix currentPose = eye(4);
+	// std::cout << currentPose << std::endl;
+
+	initialEstimate.insert(getKey('x',0),Pose3(currentPose));
+	// std::cout << getKey('x',0) << std::endl;
 
 	while(imu >> poseID) {
 		for(int i=0; i<16; i++) {
 			imu >> odom.data()[i];
 		}
+		currentPose = currentPose*odom;
 
-		graph.add(BetweenFactor<Pose3>(poseID, poseID+1, Pose3(odom), odometryNoise));
+		// IMU could be in the graph or the initial
+		// graph.add(BetweenFactor<Pose3>(getKey('x',poseID), getKey('x',poseID+1), Pose3(odom), odometryNoise));
+		initialEstimate.insert(getKey('x',poseID+1),Pose3(currentPose));
 	}
 }
 
+// Not used - IMU calculations in c++
 void DynamicFactorGraph::loadIMUData(std::string accel, std::string angular, std::string imuTime, std::string imageTime) {
 	std::string value;
 
@@ -115,7 +124,7 @@ void DynamicFactorGraph::loadIMUData(std::string accel, std::string angular, std
 	// std::cout << accelMeasurements[0].size() << " " << accelMeasurements[1].size() << " " << accelMeasurements[2].size() << std::endl;
 	// std::cout << accelMeasurements[0][0] << " " << accelMeasurements[1][0] << " " << accelMeasurements[2][0] << std::endl;
 	// std::cout << accelMeasurements[0][accelMeasurements[0].size()-1] << " " << accelMeasurements[1][accelMeasurements[1].size()-1] << " " << accelMeasurements[2][accelMeasurements[2].size()-1] << std::endl;
-}
+}	
 
 /********************************************************************************
 * This reads in the landmarks from file.  File format is:						*
@@ -130,7 +139,7 @@ void DynamicFactorGraph::loadLandmarks(std::string landmarkFile) {
 	size_t x, l;
 
 	// Noise model for camera
-	const noiseModel::Isotropic::shared_ptr cameraNoise = noiseModel::Isotropic::Sigma(3,.1);
+	const noiseModel::Isotropic::shared_ptr cameraNoise = noiseModel::Isotropic::Sigma(3,0.1);
 	// Camera calibration matrix, params are in *.h
 	const Cal3_S2Stereo::shared_ptr K(new Cal3_S2Stereo(fx,fy,s,u0,v0,b));
 
@@ -139,56 +148,86 @@ void DynamicFactorGraph::loadLandmarks(std::string landmarkFile) {
 	while(factorFile >> x >> l >> uL >> uR >> v >> X >> Y >> Z) {
 		graph.push_back(
 			GenericStereoFactor<Pose3,Point3>(StereoPoint2(uL,uR,v), cameraNoise,
-				Symbol('x', x), Symbol('l', l), K));
-		if (!initialEstimate.exists(Symbol('l',l))) {
-			Pose3 camPose = initialEstimate.at<Pose3>(Symbol('x',x));
+				getKey('x',x), getKey('l',l), K));
+		if (!initialEstimate.exists(getKey('l',l))) {
+			Pose3 camPose = initialEstimate.at<Pose3>(getKey('x',x));
+			// Point3 worldPoint = camPose.transform_from(Point3(X,Y,Z));
 			Point3 worldPoint = camPose.transform_from(Point3(X,Y,Z));
 
-			initialEstimate.insert(Symbol('l',l), worldPoint);
+			initialEstimate.insert(getKey('l',l), worldPoint);
 		}
 	}
+}
+Key DynamicFactorGraph::getKey(char type, int index) {
+	return Symbol(type,index+2039287402);
 }
 
 void DynamicFactorGraph::solve() {
 	// The first pose will probably be identity at (0,0,0), as such, 
 	// we don't want it to move during optimaziotn, so the following is done:
-	Pose3 firstPose = initialEstimate.at<Pose3>(Symbol('x',0));
-	graph.push_back(NonlinearEquality<Pose3>(Symbol('x',0),firstPose));
+	Pose3 firstPose = initialEstimate.at<Pose3>(getKey('x',0));
+	// graph.push_back(NonlinearEqua	lity<Pose3>(getKey('x',0),firstPose));
 
 	Values poseValues;
 
+	// std::cout << initialEstimate.at<Pose3>(getKey('x',0)).x() << " " << initialEstimate.at<Pose3>(getKey('x',0)).y() << std::endl;
+
 	// Now we just solve the optimization algorithm
-	try {
-		LevenbergMarquardtOptimizer optimizer = LevenbergMarquardtOptimizer(graph, initialEstimate);
-		Values result = optimizer.optimize();
+	// try {
+		// LevenbergMarquardtOptimizer optimizer = LevenbergMarquardtOptimizer(graph, initialEstimate);
+		// Values result = optimizer.optimize();
 
 		// Make the output usable
-		poseValues = result.filter<Pose3>();
+		// poseValues = result.filter<Pose3>();
 		// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
-	}
-	catch(...) {
-		std::cout << "Using Gauss Newton because LM failed" << std::endl;
+	// }
+	// catch(...) {
+	// 	std::cout << "Using Gauss Newton because LM failed" << std::endl;
 		GaussNewtonParams params;
 		params.linearSolverType = NonlinearOptimizerParams::MULTIFRONTAL_CHOLESKY;
+		// params.linearSolverType = NonlinearOptimizerParams::MULTIFRONTAL_QR;
 		GaussNewtonOptimizer optimizer2 = GaussNewtonOptimizer(graph,initialEstimate,params);
 		Values result2 = optimizer2.optimize();
 
-		// Make the output usable
+	// 	// Make the output usable
 		poseValues = result2.filter<Pose3>();
-		// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
-	}
+	// 	// poseValues.print("some std::string that gets printed before the data, maybe do csv style headings?");
+	// }
 
+	// graph.print();
+	// initialEstimate.print("");
+
+	// The resulting poses after solve
 	std::cout << "x,y,z" << std::endl;
 	for(int i=1; i<poseValues.size(); i++) {
-		std::cout << poseValues.at<Pose3>(Symbol('x',i)).x() << "," << poseValues.at<Pose3>(Symbol('x',i)).y() << "," << poseValues.at<Pose3>(Symbol('x',i)).z() << std::endl;
+		std::cout << poseValues.at<Pose3>(getKey('x',i)).x() << "," << poseValues.at<Pose3>(getKey('x',i)).y() << "," << poseValues.at<Pose3>(getKey('x',i)).z() << std::endl;
 	}
 
+	// The resulting landmarks after solve
 	// Values landmarkValues = result.filter<Point3>();
+	// // landmarkValues.print("");
 	// std::cout << "x,y,z" << std::endl;
 	// for(int i=1; i<landmarkValues.size(); i++) {
 	// 	try {
-	// 		std::cout << landmarkValues.at<Point3>(Symbol('l',i)).x() << "," << landmarkValues.at<Point3>(Symbol('l',i)).y() << "," << landmarkValues.at<Point3>(Symbol('l',i)).z() << std::endl;
+	// 		std::cout << landmarkValues.at<Point3>(getKey('l',i)).x() << "," << landmarkValues.at<Point3>(getKey('l',i)).y() << "," << landmarkValues.at<Point3>(getKey('l',i)).z() << std::endl;
 	// 	}
 	// 	catch (...){}
+	// }
+
+	// The initial landmarks
+	// Values landmarkInitial = initialEstimate.filter<Point3>();
+	// std::cout << "x,y,z" << std::endl;
+	// for(int i=1; i<landmarkInitial.size(); i++) {
+	// 	try {
+	// 		std::cout << landmarkInitial.at<Point3>(getKey('l',i)).x() << "," << landmarkInitial.at<Point3>(getKey('l',i)).y() << "," << landmarkInitial.at<Point3>(getKey('l',i)).z() << std::endl;
+	// 	}
+	// 	catch (...) {}
+	// }
+
+	// The initial pose
+	// Values initialPose = initialEstimate.filter<Pose3>();
+	// std::cout << "x,y,z" << std::endl;
+	// for(int i=1; i<initialPose.size(); i++) {
+	// 	std::cout << initialPose.at<Pose3>(getKey('x',i)).x() << "," << initialPose.at<Pose3>(getKey('x',i)).y() << "," << initialPose.at<Pose3>(getKey('x',i)).z() << std::endl;
 	// }
 }
