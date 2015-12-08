@@ -15,7 +15,7 @@ initial = Values;
 pose_output = csvread('pose_output.txt');
 landmark_output = csvread('landmark_output.txt');
 
-stereo_model = noiseModel.Diagonal.Sigmas([1.0; 1.0; 1.0]);
+stereo_model = noiseModel.Diagonal.Sigmas([2.0; 2.0; 2.0]);
 % format: fx fy skew cx cy baseline
 K = Cal3_S2Stereo(...
     164.255034407511, 164.255034407511, 0,...
@@ -47,7 +47,7 @@ end
 nIMU = size(imu_timestamps, 2);
 
 [x, y, z] = dcm2angle(rotation_imu_to_leftcam, 'XYZ');
-imu_leftcam_R = angle2dcm(x, pi - y, z, 'XYZ');
+imu_leftcam_R = [0, 0, 1; 0, 1 0; -1, 0, 0] * rotation_imu_to_leftcam;
 
 pT = eye(4,4);
 pT(1:3, 1:3) = imu_leftcam_R;
@@ -60,13 +60,13 @@ while time < image_timestamps(1,29)
     counter_time = counter_time + 1;
     time = imu_timestamps(1,counter_time);
 end
-bias = [1.0*mean(body_accel(1,1:counter_time));1.0*mean(body_accel(2,1:counter_time));1.0012*mean(body_accel(3,1:counter_time))];
-imustd = [std(body_accel(1,1:counter_time));std(body_accel(2,1:counter_time));std(body_accel(3,1:counter_time))];
+bias = [1.0*mean(body_accel(1,2900:end));1.0*mean(body_accel(2,2900:end));1.0*mean(body_accel(3,2900:end))];
+imustd = [std(body_accel(1,2900:end));std(body_accel(2,2900:end));std(body_accel(3,2900:end))];
 fprintf('Bias Accel\n');
 fprintf('%.7f %.7f %.7f\n',bias);
 
-bias_velw = [mean(body_angvel(1,1:counter_time));mean(body_angvel(2,1:counter_time));1*mean(body_angvel(3,1:counter_time))];
-imustd_velw = [std(body_angvel(1,1:counter_time));std(body_angvel(2,1:counter_time));std(body_angvel(3,1:counter_time))];
+bias_velw = [mean(body_angvel(1,2900:end));mean(body_angvel(2,2900:end));1*mean(body_angvel(3,2900:end))];
+imustd_velw = [std(body_angvel(1,2900:end));std(body_angvel(2,2900:end));std(body_angvel(3,2900:end))];
 fprintf('Bias Gyro\n');
 fprintf('%.7f %.7f %.7f\n',bias_velw);
 
@@ -113,8 +113,32 @@ for i=2:size(pose_output, 1)
     graph.add(BetweenFactorPose3(symbol('x', i-2), symbol('x', i-1), odometry, covariance));
 end
 
+% % %% Summarize IMU data between the previous GPS measurement and now
+% %     IMUindices = find(IMUtimes >= t_previous & IMUtimes <= t);
+% %     
+% %     currentSummarizedMeasurement = gtsam.ImuFactorPreintegratedMeasurements( ...
+% %       currentBias, IMU_metadata.AccelerometerSigma.^2 * eye(3), ...
+% %       IMU_metadata.GyroscopeSigma.^2 * eye(3), IMU_metadata.IntegrationSigma.^2 * eye(3));
+% %     
+% %     for imuIndex = IMUindices
+% %       accMeas = [ IMU_data(imuIndex).accelX; IMU_data(imuIndex).accelY; IMU_data(imuIndex).accelZ ];
+% %       omegaMeas = [ IMU_data(imuIndex).omegaX; IMU_data(imuIndex).omegaY; IMU_data(imuIndex).omegaZ ];
+% %       deltaT = IMU_data(imuIndex).dt;
+% %       currentSummarizedMeasurement.integrateMeasurement(accMeas, omegaMeas, deltaT);
+% %     end
+% %     
+% %     % Create IMU factor
+% %     newFactors.add(ImuFactor( ...
+% %       currentPoseKey-1, currentVelKey-1, ...
+% %       currentPoseKey, currentVelKey, ...
+% %       currentBiasKey, currentSummarizedMeasurement, g, w_coriolis));
+% %     
+% %     % Bias evolution as given in the IMU metadata
+% %     newFactors.add(BetweenFactorConstantBias(currentBiasKey-1, currentBiasKey, imuBias.ConstantBias(zeros(3,1), zeros(3,1)), ...
+% %       noiseModel.Diagonal.Sigmas(sqrt(numel(IMUindices)) * sigma_between_b)));
+
 %% Add a constraint on the starting pose
-key = symbol('x', 0);
+key = symbol('x', pose_output(1, 1));
 first_pose = initial.at(key);
 graph.add(NonlinearEqualityPose3(key, first_pose));
 
@@ -131,7 +155,7 @@ figure;
 hold on;
 axis equal;
 plot3DTrajectory(initial, 'r', 1, 0.1);
-plot3DPoints(initial);
+% plot3DPoints(initial);
 xlabel('x');
 ylabel('y');
 zlabel('z');
@@ -140,7 +164,7 @@ figure;
 hold on;
 axis equal;
 plot3DTrajectory(result, 'r', 1, 0.1);
-plot3DPoints(result);
+% plot3DPoints(result);
 xlabel('x');
 ylabel('y');
 zlabel('z');

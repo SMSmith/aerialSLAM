@@ -9,8 +9,7 @@ nImages = size(image_timestamps,2);
 nIMU = size(imu_timestamps,2);
 
 [x, y, z] = dcm2angle(rotation_imu_to_leftcam, 'XYZ');
-imu_leftcam_R = rotation_imu_to_leftcam;
-imu_leftcam_R = [0, 0, 1; 0, 1 0; -1, 0, 0] * imu_leftcam_R;
+imu_leftcam_R = [0, 0, 1; 0, 1 0; -1, 0, 0] * rotation_imu_to_leftcam;
 
 pT = eye(4,4);
 pT(1:3, 1:3) = imu_leftcam_R;
