@@ -15,7 +15,8 @@ initial = Values;
 pose_output = csvread('pose_output.txt');
 landmark_output = csvread('landmark_output.txt');
 
-stereo_model = noiseModel.Diagonal.Sigmas([2.0; 2.0; 2.0]);
+% stereo_model = noiseModel.Diagonal.Sigmas([2.0; 2.0; 2.0]);
+stereo_model = noiseModel.Isotropic.Sigma(3,1);
 % format: fx fy skew cx cy baseline
 K = Cal3_S2Stereo(...
     164.255034407511, 164.255034407511, 0,...
@@ -109,7 +110,7 @@ for i=2:size(pose_output, 1)
     last_pose = pose;
     
     odometry = Pose3(T);
-    covariance = noiseModel.Diagonal.Sigmas([3*pi/180; 3*pi/180; 3*pi/180; 0.0005*i; 0.0005*i; 0.0005*i]);
+    covariance = noiseModel.Diagonal.Sigmas([3*pi/180; 3*pi/180; 3*pi/180; 0.005*i; 0.005*i; 0.005*i]);
     graph.add(BetweenFactorPose3(symbol('x', i-2), symbol('x', i-1), odometry, covariance));
 end
 
@@ -163,7 +164,7 @@ zlabel('z');
 figure;
 hold on;
 axis equal;
-plot3DTrajectory(result, 'r', 1, 0.1);
+plot3DTrajectory(result, 'g', 1, 0.1);
 % plot3DPoints(result);
 xlabel('x');
 ylabel('y');

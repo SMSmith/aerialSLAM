@@ -12,11 +12,9 @@ path = [eye(4)];
 landmarks = [];
 landmark_locations = [];
 landmark_output = [];
-start_index = 0;
-end_index = 60;
-pose_output = [start_index 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
+pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 % for i=0:180
-for i=start_index:end_index
+for i=0:180
 % for i=0:200
 % for i=0:4067
     ind1 = sprintf('%03d', i)
@@ -40,7 +38,7 @@ for i=start_index:end_index
     points2 = detectSURFFeatures(I2);
     [features1, valid_points1] = extractFeatures(I1, points1);
     [features2, valid_points2] = extractFeatures(I2, points2);
-    indexPairs = matchFeatures(features1, features2);
+    indexPairs = matchFeatures(features1, features2, 'Unique', true);
     matchedPoints1 = valid_points1(indexPairs(:, 1), :);
     matchedPoints2 = valid_points2(indexPairs(:, 2), :);
 %     figure;
@@ -74,7 +72,7 @@ for i=start_index:end_index
     points2B = detectSURFFeatures(I2B);
     [features1B, valid_points1B] = extractFeatures(I1B, points1B);
     [features2B, valid_points2B] = extractFeatures(I2B, points2B);
-    indexPairsB = matchFeatures(features1B, features2B);
+    indexPairsB = matchFeatures(features1B, features2B, 'Unique', true);
     matchedPoints1B = valid_points1B(indexPairsB(:, 1), :);
     matchedPoints2B = valid_points2B(indexPairsB(:, 2), :);
 %     figure;
@@ -97,7 +95,7 @@ for i=start_index:end_index
     features1B_partial = features1B(indexPairsB(:, 1), :);
 %     valid_points1B_partial = valid_points1B(indexPairsB(:, 1), :);
 
-    cross_matches = matchFeatures(features1_partial, features1B_partial);
+    cross_matches = matchFeatures(features1_partial, features1B_partial, 'Unique', true);
     matched1 = matchedPoints1(cross_matches(:, 1), :);
     matched2 = matchedPoints2(cross_matches(:, 1), :);
 %     matched1B = matchedPoints1B(cross_matches(:, 2), :);
@@ -191,13 +189,13 @@ for i=start_index:end_index
 %         landmark_locations = matched1_inliers;  % for plotting
 %     end
 
-    if mod(i, 200) == 0 || size(landmarks, 1) == 0
+    if mod(i, 200) == 0
         landmarks = [landmarks; cross_matched_features(best_inlier_indices, :)];
         landmark_locations = [landmark_locations; matched1_inliers];  % for plotting
         size(landmarks)
     end
     
-    [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :));
+    [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :), 'Unique', true);
     landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
     landmarks_and_metric = sortrows(landmarks_and_metric, 1);
     size(landmarks_and_metric)
@@ -205,14 +203,14 @@ for i=start_index:end_index
     feature_ids = [];
 %     good_landmark_ids = [55,26,28, 1,20,33,74,86, 7,62,31,22,35,80,64,57,14,78,41,85,36,18,12,68,43,40,19, 3,76,30,69,60,58, 9,29,50,63,71, 4,21,82,23,66,8,11,34,32,70,79,37];
 %     good_landmark_ids = [55, 28, 1, 20, 33, 74, 7];
-    for j=1:min(10, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
+    for j=1:min(1000, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
         landmark_id = landmarks_and_metric(j, 2);
 %         if ~ismember(landmark_id, good_landmark_ids)
 %             continue;
 %         end
-%         if landmark_id ~= 4 && landmark_id ~= 1
-%             continue;
-%         end
+        if landmark_id ~= 4 && landmark_id ~= 1
+            continue;
+        end
 
         feature_id = landmarks_and_metric(j, 3);
         landmark_ids = [landmark_ids; landmark_id];
@@ -238,7 +236,7 @@ for i=start_index:end_index
 %         if i > 33
 %             landmark_ids
 %             figure(1);
-%             imshow('../../datasets/cmu_16662_p2/sensor_data/left120.jpg');
+%             imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
 %             hold on;
 %             scatter(landmark_locations(landmark_ids, 1), landmark_locations(landmark_ids, 2), 'ro');
 % 
