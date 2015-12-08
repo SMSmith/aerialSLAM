@@ -215,24 +215,25 @@ end
 
 %% Generate landmarks
 LANDMARKS_PER_FRAME_PAIR = 3;
-SLINDING_WINDOW_SIZE = 10;
+SLIDING_WINDOW_SIZE = 5;
 
 landmark_idx_count = 0;
 landmark_output = [];
 for frame1_idx=0:end_idx-1
     frame1_idx
     frame1_features = frame_features{frame1_idx+1};
-    for frame2_idx=frame1_idx+1:min(frame1_idx+SLINDING_WINDOW_SIZE, end_idx)
+    for frame2_idx=frame1_idx+1:min(frame1_idx+SLIDING_WINDOW_SIZE, end_idx)
         frame2_features = frame_features{frame2_idx+1};
         
         [feature_matches, match_metric] = matchFeatures(frame1_features, frame2_features, 'Unique', true);
-        metric_and_matches = [single(feature_matches), match_metric];
-        metric_and_matches = sortrows(metric_and_matches, 3);
         
 %         % Skip frame pair if not enough feature matches
-%         if size(metric_and_matches, 1) < 30
+%         if size(feature_matches, 1) < 50
 %             continue
 %         end
+        
+        metric_and_matches = [single(feature_matches), match_metric];
+        metric_and_matches = sortrows(metric_and_matches, 3);
         
         for i=1:LANDMARKS_PER_FRAME_PAIR
             if i > size(metric_and_matches, 1)
