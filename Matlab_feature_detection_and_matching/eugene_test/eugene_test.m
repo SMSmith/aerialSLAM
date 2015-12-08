@@ -10,11 +10,15 @@ cam2_matrix = cameraMatrix(camera_params, eye(3), [0.1621, 0, 0]);
 
 path = [eye(4)];
 landmarks = {};
-num_landmarks = [];
+frame_features = {};
+frame_landmark_ids = {};
+frame_uvXYZs = {};
+landmark_idx_count = [];
 landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
-for i=0:80
+end_idx = 5;
+for i=0:end_idx
 % for i=0:200
 % for i=0:4067
     ind1 = sprintf('%03d', i)
@@ -194,58 +198,77 @@ for i=0:80
 %         landmark_locations = [landmark_locations; matched1_inliers];  % for plotting
 %         size(landmarks)
 %     end
-
+   
     cur_frame_features = cross_matched_features(best_inlier_indices, :);
-    LANDMARKS_PER_FRAME = 10;
-    SLINDING_WINDOW_SIZE = 40;
+    cur_frame_num_features = size(cur_frame_features, 1);
     
-    landmarks{i+1} = cur_frame_features;
-    num_landmarks = [num_landmarks, size(cur_frame_features, 1)];
-    if i == 0
-        % Add all landmarks the first frame
-        for feature_id=1:size(cur_frame_features, 1)
-            landmark_id = feature_id;  % only true the first frame
+    cur_frame_feature_indices = [];
+    cur_frame_uvXYZs = [];
+    for feature_id=1:cur_frame_num_features
+       
+        uL = matched1_inliers(feature_id, 1);
+        uR = matched2_inliers(feature_id, 1);
+        vL = matched1_inliers(feature_id, 2);
+        vR = matched2_inliers(feature_id, 2);
 
-            uL = matched1_inliers(feature_id, 1);
-            uR = matched2_inliers(feature_id, 1);
-            vL = matched1_inliers(feature_id, 2);
-            vR = matched2_inliers(feature_id, 2);
-
-            X = world_points_inliers(feature_id, 1);
-            Y = world_points_inliers(feature_id, 2);
-            Z = world_points_inliers(feature_id, 3);
-            landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
-        end
-    else
-        % Match landmarks with frames in sliding window, earliest first
-        num_landmarks_added = 0;
-        for frame_num=max(1, i-SLINDING_WINDOW_SIZE+1):i
-            frame_landmarks = landmarks{frame_num};
-            [landmarkID_featureID_matches, landmark_match_metric] = matchFeatures(frame_landmarks, cur_frame_features, 'Unique', true);
-            metric_and_matches = [single(landmarkID_featureID_matches), landmark_match_metric];
-            metric_and_matches = sortrows(metric_and_matches, 3);
-            
-            j = 1;
-            landmarks_offset = sum(num_landmarks(1:frame_num-1));
-            while num_landmarks_added < LANDMARKS_PER_FRAME && j <= size(metric_and_matches, 1)
-                feature_id = metric_and_matches(j, 2);
-                landmark_id = metric_and_matches(j, 1) + landmarks_offset;
-                
-                uL = matched1_inliers(feature_id, 1);
-                uR = matched2_inliers(feature_id, 1);
-                vL = matched1_inliers(feature_id, 2);
-                vR = matched2_inliers(feature_id, 2);
-
-                X = world_points_inliers(feature_id, 1);
-                Y = world_points_inliers(feature_id, 2);
-                Z = world_points_inliers(feature_id, 3);
-                landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
-                
-                j = j + 1;
-                num_landmarks_added = num_landmarks_added + 1;
-            end
-        end
+        X = world_points_inliers(feature_id, 1);
+        Y = world_points_inliers(feature_id, 2);
+        Z = world_points_inliers(feature_id, 3);       
+        
+        cur_frame_uvXYZs = [cur_frame_uvXYZs; [uL, uR, (vL + vR) / 2, X, Y, Z]];
     end
+    
+    frame_features{i+1} = cur_frame_features;
+    frame_landmark_ids{i+1} = zeros(cur_frame_num_features, 1) - 1;
+    frame_uvXYZs{i+1} = cur_frame_uvXYZs;
+
+%     landmarks{i+1} = cur_frame_features;
+%     num_landmarks = [num_landmarks, size(cur_frame_features, 1)];
+%     if i == 0
+%         % Add all landmarks the first frame
+%         for feature_id=1:size(cur_frame_features, 1)
+%             landmark_id = feature_id;  % only true the first frame
+% 
+%             uL = matched1_inliers(feature_id, 1);
+%             uR = matched2_inliers(feature_id, 1);
+%             vL = matched1_inliers(feature_id, 2);
+%             vR = matched2_inliers(feature_id, 2);
+% 
+%             X = world_points_inliers(feature_id, 1);
+%             Y = world_points_inliers(feature_id, 2);
+%             Z = world_points_inliers(feature_id, 3);
+%             landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
+%         end
+%     else
+%         % Match landmarks with frames in sliding window, earliest first
+%         num_landmarks_added = 0;
+%         for frame_num=max(1, i-SLINDING_WINDOW_SIZE+1):i
+%             frame_landmarks = landmarks{frame_num};
+%             [landmarkID_featureID_matches, landmark_match_metric] = matchFeatures(frame_landmarks, cur_frame_features, 'Unique', true);
+%             metric_and_matches = [single(landmarkID_featureID_matches), landmark_match_metric];
+%             metric_and_matches = sortrows(metric_and_matches, 3);
+%             
+%             j = 1;
+%             landmarks_offset = sum(num_landmarks(1:frame_num-1));
+%             while num_landmarks_added < LANDMARKS_PER_FRAME && j <= size(metric_and_matches, 1)
+%                 feature_id = metric_and_matches(j, 2);
+%                 landmark_id = metric_and_matches(j, 1) + landmarks_offset;
+%                 
+%                 uL = matched1_inliers(feature_id, 1);
+%                 uR = matched2_inliers(feature_id, 1);
+%                 vL = matched1_inliers(feature_id, 2);
+%                 vR = matched2_inliers(feature_id, 2);
+% 
+%                 X = world_points_inliers(feature_id, 1);
+%                 Y = world_points_inliers(feature_id, 2);
+%                 Z = world_points_inliers(feature_id, 3);
+%                 landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
+%                 
+%                 j = j + 1;
+%                 num_landmarks_added = num_landmarks_added + 1;
+%             end
+%         end
+%     end
 
 %     
 %     
@@ -301,6 +324,49 @@ for i=0:80
 % %             waitforbuttonpress;
 % %         end
 %     
+end
+
+%% Generate landmarks
+LANDMARKS_PER_FRAME_PAIR = 3;
+SLINDING_WINDOW_SIZE = 2;
+
+landmark_idx_count = 0;
+for frame1_idx=1:end_idx+1
+    frame1_features = frame_features{frame1_idx};
+    for frame2_idx=frame1_idx:min(frame1_idx+SLINDING_WINDOW_SIZE, end_idx+1)
+        frame2_features = frame_features{frame2_idx};
+        
+        [feature_matches, match_metric] = matchFeatures(frame1_features, frame2_features, 'Unique', true);
+        metric_and_matches = [single(feature_matches), match_metric];
+        metric_and_matches = sortrows(metric_and_matches, 3);
+        
+        for i=1:LANDMARKS_PER_FRAME_PAIR
+            if i > size(metric_and_matches, 1)
+                break;
+            end
+            frame1_feature_id = metric_and_matches(i, 1);
+            frame2_feature_id = metric_and_matches(i, 2);
+
+            frame1_landmark_id = frame_landmark_ids{frame1_idx}(frame1_feature_id);
+            if frame1_landmark_id == -1  % We haven't dealt with this feature yet
+                cur_landmark_idx = landmark_idx_count;
+                landmark_idx_count = landmark_idx_count + 1;                
+
+                % Set frame1 landmark index
+                frame_landmark_ids{frame1_idx}(frame1_feature_id) = cur_landmark_idx;
+                % Add frame1 landmark
+                frame1_uvXYZ = frame_uvXYZs{frame1_idx}(frame1_feature_id, :);
+                landmark_output = [landmark_output; [frame1_idx-1, cur_landmark_idx, frame1_uvXYZ]];
+            else  % We have already taken care of this feature in a previous iteration
+                cur_landmark_idx = frame1_landmark_id;
+            end
+            % Set frame2 landmark index
+            frame_landmark_ids{frame2_idx}(frame2_feature_id) = cur_landmark_idx;
+            % Add frame2 landmark
+            frame2_uvXYZ = frame_uvXYZs{frame2_idx}(frame2_feature_id, :);
+            landmark_output = [landmark_output; [frame2_idx-1, cur_landmark_idx, frame2_uvXYZ]];
+        end
+    end
 end
 
 %% Write output
