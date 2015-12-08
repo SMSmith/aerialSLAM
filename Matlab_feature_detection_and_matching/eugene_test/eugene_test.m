@@ -17,7 +17,7 @@ landmark_idx_count = [];
 landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
-end_idx = 5;
+end_idx = 200;
 for i=0:end_idx
 % for i=0:200
 % for i=0:4067
@@ -328,13 +328,15 @@ end
 
 %% Generate landmarks
 LANDMARKS_PER_FRAME_PAIR = 3;
-SLINDING_WINDOW_SIZE = 2;
+SLINDING_WINDOW_SIZE = 10;
 
 landmark_idx_count = 0;
-for frame1_idx=1:end_idx+1
-    frame1_features = frame_features{frame1_idx};
-    for frame2_idx=frame1_idx:min(frame1_idx+SLINDING_WINDOW_SIZE, end_idx+1)
-        frame2_features = frame_features{frame2_idx};
+landmark_output = [];
+for frame1_idx=0:end_idx-1
+    frame1_idx
+    frame1_features = frame_features{frame1_idx+1};
+    for frame2_idx=frame1_idx+1:min(frame1_idx+SLINDING_WINDOW_SIZE, end_idx)
+        frame2_features = frame_features{frame2_idx+1};
         
         [feature_matches, match_metric] = matchFeatures(frame1_features, frame2_features, 'Unique', true);
         metric_and_matches = [single(feature_matches), match_metric];
@@ -347,24 +349,24 @@ for frame1_idx=1:end_idx+1
             frame1_feature_id = metric_and_matches(i, 1);
             frame2_feature_id = metric_and_matches(i, 2);
 
-            frame1_landmark_id = frame_landmark_ids{frame1_idx}(frame1_feature_id);
+            frame1_landmark_id = frame_landmark_ids{frame1_idx+1}(frame1_feature_id);
             if frame1_landmark_id == -1  % We haven't dealt with this feature yet
                 cur_landmark_idx = landmark_idx_count;
                 landmark_idx_count = landmark_idx_count + 1;                
 
                 % Set frame1 landmark index
-                frame_landmark_ids{frame1_idx}(frame1_feature_id) = cur_landmark_idx;
+                frame_landmark_ids{frame1_idx+1}(frame1_feature_id) = cur_landmark_idx;
                 % Add frame1 landmark
-                frame1_uvXYZ = frame_uvXYZs{frame1_idx}(frame1_feature_id, :);
-                landmark_output = [landmark_output; [frame1_idx-1, cur_landmark_idx, frame1_uvXYZ]];
+                frame1_uvXYZ = frame_uvXYZs{frame1_idx+1}(frame1_feature_id, :);
+                landmark_output = [landmark_output; [frame1_idx, cur_landmark_idx, frame1_uvXYZ]];
             else  % We have already taken care of this feature in a previous iteration
                 cur_landmark_idx = frame1_landmark_id;
             end
             % Set frame2 landmark index
-            frame_landmark_ids{frame2_idx}(frame2_feature_id) = cur_landmark_idx;
+            frame_landmark_ids{frame2_idx+1}(frame2_feature_id) = cur_landmark_idx;
             % Add frame2 landmark
-            frame2_uvXYZ = frame_uvXYZs{frame2_idx}(frame2_feature_id, :);
-            landmark_output = [landmark_output; [frame2_idx-1, cur_landmark_idx, frame2_uvXYZ]];
+            frame2_uvXYZ = frame_uvXYZs{frame2_idx+1}(frame2_feature_id, :);
+            landmark_output = [landmark_output; [frame2_idx, cur_landmark_idx, frame2_uvXYZ]];
         end
     end
 end
