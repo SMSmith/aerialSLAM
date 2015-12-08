@@ -20,8 +20,6 @@ pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
 end_idx = 633;
 Ts = zeros(4, 4, end_idx+1);
 parfor i=0:end_idx
-% for i=0:200
-% for i=0:4067
     ind1 = sprintf('%03d', i)
     ind2 = sprintf('%03d', i+1);
 %     ind1 = sprintf('%04d', i)
@@ -156,12 +154,7 @@ parfor i=0:end_idx
     [T, EPS] = estimateRigidTransform(world_points_partial(best_inlier_indices, :)', world_pointsB_partial(best_inlier_indices, :)')
     
     Ts(:, :, i+1) = T;
-    
-%     cur_pos = path(:, :, end) * T;
-%     path(:, :, i+1) = cur_pos;
-%     cur_pos_2 = cur_pos';
-%     pose_output = [pose_output; [i+1, cur_pos_2(:)']];
-    
+
 %     world_pointsB_partial_inliers_transformed = [];
 %     world_points_partial_inliners = world_points_partial(best_inlier_indices, :);
 %     world_pointsB_partial_inliners = world_pointsB_partial(best_inlier_indices, :);
@@ -186,22 +179,7 @@ parfor i=0:end_idx
     matched1_inliers = matched1.Location(best_inlier_indices, :); 
     matched2_inliers = matched2.Location(best_inlier_indices, :);
     world_points_inliers = world_points_partial(best_inlier_indices, :);
-                
-%     if i == 0
-% %         for j=1:size(best_inlier_indices, 2)
-% %             j
-% %             landmarks = [landmarks; cross_matched_features(best_inlier_indices(j), :)];
-% %         end
-%         landmarks = cross_matched_features(best_inlier_indices, :);
-%         landmark_locations = matched1_inliers;  % for plotting
-%     end
-
-%     if mod(i, 200) == 0
-%         landmarks = [landmarks; cross_matched_features(best_inlier_indices, :)];
-%         landmark_locations = [landmark_locations; matched1_inliers];  % for plotting
-%         size(landmarks)
-%     end
-   
+    
     cur_frame_features = cross_matched_features(best_inlier_indices, :);
     cur_frame_num_features = size(cur_frame_features, 1);
     
@@ -224,109 +202,6 @@ parfor i=0:end_idx
     frame_features{i+1} = cur_frame_features;
     frame_landmark_ids{i+1} = zeros(cur_frame_num_features, 1) - 1;
     frame_uvXYZs{i+1} = cur_frame_uvXYZs;
-
-%     landmarks{i+1} = cur_frame_features;
-%     num_landmarks = [num_landmarks, size(cur_frame_features, 1)];
-%     if i == 0
-%         % Add all landmarks the first frame
-%         for feature_id=1:size(cur_frame_features, 1)
-%             landmark_id = feature_id;  % only true the first frame
-% 
-%             uL = matched1_inliers(feature_id, 1);
-%             uR = matched2_inliers(feature_id, 1);
-%             vL = matched1_inliers(feature_id, 2);
-%             vR = matched2_inliers(feature_id, 2);
-% 
-%             X = world_points_inliers(feature_id, 1);
-%             Y = world_points_inliers(feature_id, 2);
-%             Z = world_points_inliers(feature_id, 3);
-%             landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
-%         end
-%     else
-%         % Match landmarks with frames in sliding window, earliest first
-%         num_landmarks_added = 0;
-%         for frame_num=max(1, i-SLINDING_WINDOW_SIZE+1):i
-%             frame_landmarks = landmarks{frame_num};
-%             [landmarkID_featureID_matches, landmark_match_metric] = matchFeatures(frame_landmarks, cur_frame_features, 'Unique', true);
-%             metric_and_matches = [single(landmarkID_featureID_matches), landmark_match_metric];
-%             metric_and_matches = sortrows(metric_and_matches, 3);
-%             
-%             j = 1;
-%             landmarks_offset = sum(num_landmarks(1:frame_num-1));
-%             while num_landmarks_added < LANDMARKS_PER_FRAME && j <= size(metric_and_matches, 1)
-%                 feature_id = metric_and_matches(j, 2);
-%                 landmark_id = metric_and_matches(j, 1) + landmarks_offset;
-%                 
-%                 uL = matched1_inliers(feature_id, 1);
-%                 uR = matched2_inliers(feature_id, 1);
-%                 vL = matched1_inliers(feature_id, 2);
-%                 vR = matched2_inliers(feature_id, 2);
-% 
-%                 X = world_points_inliers(feature_id, 1);
-%                 Y = world_points_inliers(feature_id, 2);
-%                 Z = world_points_inliers(feature_id, 3);
-%                 landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
-%                 
-%                 j = j + 1;
-%                 num_landmarks_added = num_landmarks_added + 1;
-%             end
-%         end
-%     end
-
-%     
-%     
-%     [landmark_matches, landmark_match_metric] = matchFeatures(landmarks, cross_matched_features(best_inlier_indices, :), 'Unique', true);
-%     landmarks_and_metric = [landmark_match_metric, single(landmark_matches)];
-%     landmarks_and_metric = sortrows(landmarks_and_metric, 1);
-%     size(landmarks_and_metric)
-%     landmark_ids = [];
-%     feature_ids = [];
-% %     good_landmark_ids = [55,26,28, 1,20,33,74,86, 7,62,31,22,35,80,64,57,14,78,41,85,36,18,12,68,43,40,19, 3,76,30,69,60,58, 9,29,50,63,71, 4,21,82,23,66,8,11,34,32,70,79,37];
-% %     good_landmark_ids = [55, 28, 1, 20, 33, 74, 7];
-%     for j=1:min(1000, size(landmarks_and_metric, 1))  % use at most top 50 landmarks each frame
-%         landmark_id = landmarks_and_metric(j, 2);
-% %         if ~ismember(landmark_id, good_landmark_ids)
-% %             continue;
-% %         end
-%         if landmark_id ~= 4 && landmark_id ~= 1
-%             continue;
-%         end
-% 
-%         feature_id = landmarks_and_metric(j, 3);
-%         landmark_ids = [landmark_ids; landmark_id];
-%         feature_ids = [feature_ids; feature_id];
-% 
-%         if feature_id <= size(matched1_inliers, 1)
-%             uL = matched1_inliers(feature_id, 1);
-%             uR = matched2_inliers(feature_id, 1);
-%             vL = matched1_inliers(feature_id, 2);
-%             vR = matched2_inliers(feature_id, 2);
-% 
-% %                 matched1_inliers(feature_id, 2) - matched2_inliers(feature_id, 2)
-% 
-% %             X = world_points(j, 1);
-% %             Y = world_points(j, 2);
-% %             Z = world_points(j, 3);
-%             X = world_points_inliers(feature_id, 1);
-%             Y = world_points_inliers(feature_id, 2);
-%             Z = world_points_inliers(feature_id, 3);
-%             landmark_output = [landmark_output; [i, landmark_id, uL, uR, (vL + vR) / 2, X, Y, Z]];
-%         end
-%     end
-% %         if i > 33
-% %             landmark_ids
-% %             figure(1);
-% %             imshow('../../datasets/cmu_16662_p2/sensor_data/left000.jpg');
-% %             hold on;
-% %             scatter(landmark_locations(landmark_ids, 1), landmark_locations(landmark_ids, 2), 'ro');
-% % 
-% %             figure(2);
-% %             imshow(I1);
-% %             hold on;
-% %             scatter(matched1_inliers(feature_ids, 1), matched1_inliers(feature_ids, 2), 'ro');
-% %             waitforbuttonpress;
-% %         end
-%     
 end
 
 %% Compute poses
@@ -404,105 +279,3 @@ plot3(xs, ys, zs);
 xlabel('x');
 ylabel('y');
 zlabel('z');
-
-% scatter3(landmark_output(:, 6), landmark_output(:, 7), landmark_output(:, 8), '.');
-
-% 
-% %% Factor Graph
-% close all;
-% clear all;
-% clc;
-% addpath('../../gtsam-toolbox-3.2.0-win64/gtsam_toolbox');
-% import gtsam.*
-% 
-% % calib = dlmread('VO_calibration.txt');
-% % pose_output = csvread('VO_camera_poses_large.txt');
-% % landmark_output = csvread('VO_stereo_factors_large.txt');
-% pose_output = csvread('pose_output.txt');
-% landmark_output = csvread('landmark_output.txt');
-% imu = csvread('preIntegratedIMUTEMP2.csv');
-% 
-% % init
-% graph = NonlinearFactorGraph;
-% initial = Values;
-% % stereo_model = noiseModel.Diagonal.Sigmas([1.0; 1.0; 1.0]);
-% stereo_model = noiseModel.Isotropic.Sigma(3,1);
-% % format: fx fy skew cx cy baseline
-% K = Cal3_S2Stereo(...
-%     164.255034407511, 164.255034407511, 0,...
-%     214.523999214172, 119.433252334595, 0.1621);
-% % K = Cal3_S2Stereo(calib(1), calib(2), calib(3), calib(4), calib(5), calib(6));
-% 
-% % add initial poses
-% % for i=1:size(pose_output, 1)
-% %     pose = Pose3(reshape(pose_output(i,2:17),4,4)');
-% %     initial.insert(symbol('x', pose_output(i, 1)), pose);
-% % end
-% % 
-% % % load stereo measurements and initialize landmarks
-% % % camera_id landmark_id uL uR v X Y Z
-% % for i=1:size(landmark_output,1)
-% %     sf = landmark_output(i,:);
-% %     graph.add(GenericStereoFactor3D(StereoPoint2(sf(3),sf(4),sf(5)), stereo_model, ...
-% %         symbol('x', sf(1)), symbol('l', sf(2)), K));
-% %     
-% %     if ~initial.exists(symbol('l',sf(2)))
-% %         % 3D landmarks are stored in camera coordinates: transform
-% %         % to world coordinates using the respective initial pose
-% %         pose = initial.at(symbol('x', sf(1)));
-% %         world_point = pose.transform_from(Point3(sf(6),sf(7),sf(8)));
-% %         initial.insert(symbol('l',sf(2)), world_point);
-% %     end
-% % end
-% 
-% % for i=1:size(pose_output, 1)-1
-% for i=1:size(imu, 1)
-%     odometry = Pose3(reshape(imu(i,2:17),4,4)');
-%     if i ~= 1
-%         odometry = last_odometry.compose(odometry);
-%     end
-%     initial.insert(symbol('x', i-1), odometry);
-%     last_odometry = odometry;
-% %     waitforbuttonpress;
-% %     covariance = noiseModel.Diagonal.Sigmas([5*pi/180; 5*pi/180; 5*pi/180; 0.5; 0.5; 0.5]);
-% % %     covariance = noiseModel.Diagonal.Sigmas([0; 0; 0; 0; 0; 0;]);
-% %     graph.add(BetweenFactorPose3(symbol('x', i-1), symbol('x', i), odometry, covariance));
-% end
-% 
-% % add a constraint on the starting pose
-% key = symbol('x', 0);
-% first_pose = initial.at(key);
-% graph.add(NonlinearEqualityPose3(key, first_pose));
-% 
-% % optimize
-% fprintf(1,'Optimizing\n');
-% tic
-% optimizer = LevenbergMarquardtOptimizer(graph, initial);
-% % result = optimizer.optimizeSafely();
-% result = optimizer.optimize();
-% toc
-% 
-% % visualize initial trajectory, final trajectory, and final points
-% figure;
-% hold on;
-% axis equal;
-% plot3DTrajectory(initial, 'r', 1, 1);
-% plot3DPoints(initial);
-% % figure;
-% % hold on;
-% % axis equal;
-% % plot3DTrajectory(result, 'g', 1, 0.1);
-% % plot3DPoints(result);
-% xlabel('x');
-% ylabel('y');
-% zlabel('z');
-%     
-% % %% load the initial poses from VO
-% % % row format: camera_id 4x4 pose (row, major)
-% % fprintf(1,'Reading data\n');
-% % cameras = dlmread(findExampleDataFile('VO_camera_poses_large.txt'));
-% % for i=1:size(cameras,1)
-% %     pose = Pose3(reshape(cameras(i,2:17),4,4)');
-% %     initial.insert(symbol('x',cameras(i,1)),pose);
-% % end
-% % 
