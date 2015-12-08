@@ -108,9 +108,9 @@ for i=2:size(pose_output, 1)
     pose(1:3, 1:3) = pT(1:3, 1:3) * inv(imu_leftcam_R);
     T = inv(last_pose) * pose;
     last_pose = pose;
-    
+        
     odometry = Pose3(T);
-    covariance = noiseModel.Diagonal.Sigmas([3*pi/180; 3*pi/180; 3*pi/180; 0.005*i; 0.005*i; 0.005*i]);
+    covariance = noiseModel.Diagonal.Sigmas([1*pi/180; 1*pi/180; 1*pi/180; 0.0005*i; 0.0005*i; 0.0005*i]);
     graph.add(BetweenFactorPose3(symbol('x', i-2), symbol('x', i-1), odometry, covariance));
 end
 
