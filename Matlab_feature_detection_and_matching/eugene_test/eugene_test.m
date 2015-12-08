@@ -17,8 +17,9 @@ landmark_idx_count = [];
 landmark_locations = [];
 landmark_output = [];
 pose_output = [0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1];
-end_idx = 200;
-for i=0:end_idx
+end_idx = 633;
+Ts = zeros(4, 4, end_idx+1);
+parfor i=0:end_idx
 % for i=0:200
 % for i=0:4067
     ind1 = sprintf('%03d', i)
@@ -154,10 +155,12 @@ for i=0:end_idx
     size(best_inlier_indices, 2)
     [T, EPS] = estimateRigidTransform(world_points_partial(best_inlier_indices, :)', world_pointsB_partial(best_inlier_indices, :)')
     
-    cur_pos = path(:, :, end) * T;
-    path(:, :, i+1) = cur_pos;
-    cur_pos_2 = cur_pos';
-    pose_output = [pose_output; [i+1, cur_pos_2(:)']];
+    Ts(:, :, i+1) = T;
+    
+%     cur_pos = path(:, :, end) * T;
+%     path(:, :, i+1) = cur_pos;
+%     cur_pos_2 = cur_pos';
+%     pose_output = [pose_output; [i+1, cur_pos_2(:)']];
     
 %     world_pointsB_partial_inliers_transformed = [];
 %     world_points_partial_inliners = world_points_partial(best_inlier_indices, :);
@@ -326,6 +329,15 @@ for i=0:end_idx
 %     
 end
 
+%% Compute poses
+cur_pos = eye(4);
+for i=1:end_idx+1
+    cur_pos = cur_pos * Ts(:, :, i);
+    path(:, :, i+1) = cur_pos;
+    cur_pos_2 = cur_pos';
+    pose_output = [pose_output; [i, cur_pos_2(:)']];
+end
+
 %% Generate landmarks
 LANDMARKS_PER_FRAME_PAIR = 3;
 SLINDING_WINDOW_SIZE = 10;
@@ -341,6 +353,11 @@ for frame1_idx=0:end_idx-1
         [feature_matches, match_metric] = matchFeatures(frame1_features, frame2_features, 'Unique', true);
         metric_and_matches = [single(feature_matches), match_metric];
         metric_and_matches = sortrows(metric_and_matches, 3);
+        
+%         % Skip frame pair if not enough feature matches
+%         if size(metric_and_matches, 1) < 30
+%             continue
+%         end
         
         for i=1:LANDMARKS_PER_FRAME_PAIR
             if i > size(metric_and_matches, 1)
