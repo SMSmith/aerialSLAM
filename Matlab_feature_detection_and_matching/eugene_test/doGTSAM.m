@@ -114,30 +114,6 @@ for i=2:size(pose_output, 1)
     graph.add(BetweenFactorPose3(symbol('x', i-2), symbol('x', i-1), odometry, covariance));
 end
 
-% % %% Summarize IMU data between the previous GPS measurement and now
-% %     IMUindices = find(IMUtimes >= t_previous & IMUtimes <= t);
-% %     
-% %     currentSummarizedMeasurement = gtsam.ImuFactorPreintegratedMeasurements( ...
-% %       currentBias, IMU_metadata.AccelerometerSigma.^2 * eye(3), ...
-% %       IMU_metadata.GyroscopeSigma.^2 * eye(3), IMU_metadata.IntegrationSigma.^2 * eye(3));
-% %     
-% %     for imuIndex = IMUindices
-% %       accMeas = [ IMU_data(imuIndex).accelX; IMU_data(imuIndex).accelY; IMU_data(imuIndex).accelZ ];
-% %       omegaMeas = [ IMU_data(imuIndex).omegaX; IMU_data(imuIndex).omegaY; IMU_data(imuIndex).omegaZ ];
-% %       deltaT = IMU_data(imuIndex).dt;
-% %       currentSummarizedMeasurement.integrateMeasurement(accMeas, omegaMeas, deltaT);
-% %     end
-% %     
-% %     % Create IMU factor
-% %     newFactors.add(ImuFactor( ...
-% %       currentPoseKey-1, currentVelKey-1, ...
-% %       currentPoseKey, currentVelKey, ...
-% %       currentBiasKey, currentSummarizedMeasurement, g, w_coriolis));
-% %     
-% %     % Bias evolution as given in the IMU metadata
-% %     newFactors.add(BetweenFactorConstantBias(currentBiasKey-1, currentBiasKey, imuBias.ConstantBias(zeros(3,1), zeros(3,1)), ...
-% %       noiseModel.Diagonal.Sigmas(sqrt(numel(IMUindices)) * sigma_between_b)));
-
 %% Add a constraint on the starting pose
 key = symbol('x', pose_output(1, 1));
 first_pose = initial.at(key);
