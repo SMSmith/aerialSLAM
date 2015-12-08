@@ -9,27 +9,21 @@ nImages = size(image_timestamps,2);
 nIMU = size(imu_timestamps,2);
 
 [x, y, z] = dcm2angle(rotation_imu_to_leftcam, 'XYZ');
-imu_leftcam_R = angle2dcm(x, pi - y, z, 'XYZ');
+imu_leftcam_R = rotation_imu_to_leftcam;
+imu_leftcam_R = [0, 0, 1; 0, 1 0; -1, 0, 0] * imu_leftcam_R;
 
 pT = eye(4,4);
 pT(1:3, 1:3) = imu_leftcam_R;
 % pT(1:3, 4) = translation_imu_to_leftcam;
 
-counter_IMU = 1;
-counter_time = 1;
-time = imu_timestamps(1,counter_time);
-while time < image_timestamps(1,29)
-    counter_time = counter_time + 1;
-    time = imu_timestamps(1,counter_time);
-end
-bias = [1.0*mean(body_accel(1,1:counter_time));1.0*mean(body_accel(2,1:counter_time));1.0012*mean(body_accel(3,1:counter_time))];
-imustd = [std(body_accel(1,1:counter_time));std(body_accel(2,1:counter_time));std(body_accel(3,1:counter_time))];
+bias = [1.0*mean(body_accel(1,2900:end));1.0*mean(body_accel(2,2900:end));1.0*mean(body_accel(3,2900:end))];
+imustd = [std(body_accel(1,2900:end));std(body_accel(2,2900:end));std(body_accel(3,2900:end))];
 fprintf('Bias Accel\n');
 fprintf('%.7f %.7f %.7f\n',bias);
 
 
-bias_velw = [mean(body_angvel(1,1:counter_time));mean(body_angvel(2,1:counter_time));1*mean(body_angvel(3,1:counter_time))];
-imustd_velw = [std(body_angvel(1,1:counter_time));std(body_angvel(2,1:counter_time));std(body_angvel(3,1:counter_time))];
+bias_velw = [mean(body_angvel(1,2900:end));mean(body_angvel(2,2900:end));1*mean(body_angvel(3,2900:end))];
+imustd_velw = [std(body_angvel(1,2900:end));std(body_angvel(2,2900:end));std(body_angvel(3,2900:end))];
 fprintf('Bias Gyro\n');
 fprintf('%.7f %.7f %.7f\n',bias_velw);
 
@@ -40,6 +34,7 @@ import gtsam.*
 graph = NonlinearFactorGraph;
 initial = Values;
 dV = [0;0;0];
+counter_IMU = 1;
 for label = 2:nImages
     dP = [0;0;0];
     dR = eye(3,3);
@@ -72,7 +67,7 @@ for label = 2:nImages
     pose = eye(4);
     pose(1:3, 4) = pT(1:3, 4);
     pose(1:3, 1:3) = pT(1:3, 1:3) * inv(imu_leftcam_R);
-    if mod(label, 20) == 0
+    if mod(label, 10) == 0
         initial.insert(symbol('x', label-1), Pose3(pose));
     end
 
@@ -82,6 +77,15 @@ figure;
 hold on;
 axis equal;
 plot3DTrajectory(initial, 'r', 1, 1);
+plot3(-gt_position(2, :), -gt_position(3, :), gt_position(1, :));
 xlabel('x');
 ylabel('y');
 zlabel('z');
+
+%%
+% figure;
+% hold on
+% plot(body_accel(1, :));
+% plot(body_accel(2, :));
+% plot(body_accel(3, :));
+
